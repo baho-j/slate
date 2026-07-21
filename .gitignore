@@ -1,0 +1,10 @@
+# Local-only working instructions, not part of the graded repo
+CLAUDE.md
+docs/
+
+# General
+.DS_Store
+Thumbs.db
+*.log
+.idea/
+.vscode/

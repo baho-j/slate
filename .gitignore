@@ -32,6 +32,10 @@ apps/web/.env.*
 !apps/web/.env.example
 apps/web/*.local
 
+# Node / pnpm (root + workspace)
+node_modules/
+.pnpm-store/
+
 # General
 .DS_Store
 Thumbs.db

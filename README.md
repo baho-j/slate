@@ -47,11 +47,10 @@ php artisan key:generate
 php artisan migrate --seed
 php artisan serve
 
-# web
-cd apps/web
-cp .env.example .env
-npm install
-npm run dev
+# web (pnpm workspace — run from repo root)
+cp apps/web/.env.example apps/web/.env
+pnpm install
+pnpm dev
 ```
 
 ## Seeded demo credentials

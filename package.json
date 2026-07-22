@@ -1,0 +1,18 @@
+{
+  "name": "slate",
+  "private": true,
+  "packageManager": "pnpm@10.24.0+sha512.01ff8ae71b4419903b65c60fb2dc9d34cf8bb6e06d03bde112ef38f7a34d6904c424ba66bea5cdcf12890230bf39f9580473140ed9c946fef328b6e5238a345a",
+  "engines": {
+    "node": ">=22",
+    "pnpm": ">=10"
+  },
+  "scripts": {
+    "dev": "pnpm --filter web run dev",
+    "build": "pnpm --filter web run build",
+    "lint": "pnpm --filter web run lint",
+    "format": "pnpm --filter web run format",
+    "check": "pnpm --filter web run check",
+    "typecheck": "pnpm --filter web run typecheck",
+    "web:ci": "pnpm --filter web run ci"
+  }
+}

@@ -38,3 +38,8 @@ Thumbs.db
 *.log
 .idea/
 .vscode/
+
+# Assistant working instructions & spec pack — intentionally local, never committed
+/CLAUDE.md
+/docs/
+.claude/

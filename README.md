@@ -28,10 +28,8 @@ slate/
   apps/
     api/            # Laravel REST API
     web/            # React + Vite SPA
-  docs/             # this spec pack
   .github/          # workflows, issue/PR templates
   docker-compose.yml
-  CLAUDE.md
   README.md
 ```
 

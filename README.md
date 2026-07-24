@@ -65,3 +65,8 @@ They are surfaced on the login screen (a "Demo accounts" helper) for the assesso
 | Recruiter    | recruiter@slate.test      |
 | Interviewer  | interviewer@slate.test    |
 | Candidate    | candidate@slate.test      |
+
+The staff accounts above belong to the **Acme** demo organisation. `DemoSeeder` also creates a
+second organisation, **Globex**, with its own HR/recruiter/interviewer staff
+(`hr@globex.test`, `recruiter@globex.test`, `interviewer@globex.test`, same password) so
+org-scoped isolation is visible. Run with `php artisan migrate --seed`.

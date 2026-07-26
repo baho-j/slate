@@ -9,7 +9,7 @@ export interface NavItem {
 
 export const navItems: NavItem[] = [
   { label: 'Dashboard', to: '/', icon: LayoutDashboard },
-  { label: 'Jobs', to: '/jobs', icon: Briefcase },
+  { label: 'Roles', to: '/jobs', icon: Briefcase },
   { label: 'Candidates', to: '/candidates', icon: Users },
   { label: 'Settings', to: '/settings', icon: Settings },
 ]

@@ -13,6 +13,8 @@
     "format": "pnpm --filter web run format",
     "check": "pnpm --filter web run check",
     "typecheck": "pnpm --filter web run typecheck",
+    "test": "pnpm --filter web run test",
+    "test:coverage": "pnpm --filter web run test:coverage",
     "web:ci": "pnpm --filter web run ci"
   }
 }

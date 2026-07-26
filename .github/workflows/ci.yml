@@ -10,9 +10,13 @@ concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  PHP_VERSION: '8.3'
+  NODE_VERSION: '22'
+
 jobs:
   api:
-    name: API (Laravel)
+    name: API (Pest)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -39,7 +43,7 @@ jobs:
       - name: Setup PHP
         uses: shivammathur/setup-php@v2
         with:
-          php-version: '8.3'
+          php-version: ${{ env.PHP_VERSION }}
           extensions: mbstring, pdo_pgsql, openssl, fileinfo, curl, zip, intl, bcmath
           coverage: none
 
@@ -58,6 +62,9 @@ jobs:
           cp .env.example .env
           php artisan key:generate
 
+      - name: Check formatting
+        run: vendor/bin/pint --test app database tests
+
       - name: Run tests
         env:
           DB_CONNECTION: pgsql
@@ -69,7 +76,7 @@ jobs:
         run: php artisan test
 
   web:
-    name: Web (React)
+    name: Web (Vitest)
     runs-on: ubuntu-latest
 
     steps:
@@ -80,7 +87,7 @@ jobs:
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: '22'
+          node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
 
       - name: Install dependencies
@@ -92,7 +99,81 @@ jobs:
       - name: Typecheck
         run: pnpm run typecheck
 
+      - name: Run tests
+        run: pnpm run test
+
       - name: Build
         env:
           VITE_API_URL: http://localhost:8000/api
         run: pnpm run build
+
+  contract:
+    name: API contract (Newman)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: slate
+          POSTGRES_USER: slate
+          POSTGRES_PASSWORD: slate
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U slate"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, pdo_pgsql, openssl, fileinfo, curl, zip, intl, bcmath
+          coverage: none
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: apps/api/vendor
+          key: composer-${{ runner.os }}-${{ hashFiles('apps/api/composer.lock') }}
+          restore-keys: composer-${{ runner.os }}-
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Boot the API against a seeded database
+        working-directory: apps/api
+        env:
+          DB_CONNECTION: pgsql
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_DATABASE: slate
+          DB_USERNAME: slate
+          DB_PASSWORD: slate
+        run: |
+          composer install --prefer-dist --no-progress --no-interaction
+          cp .env.example .env
+          php artisan key:generate
+          php artisan migrate --force --seed
+          php artisan serve --host=127.0.0.1 --port=8000 &
+          npx --yes wait-on -t 60000 http://127.0.0.1:8000/api/health
+
+      - name: Run the collection
+        run: >-
+          npx --yes newman run apps/api/postman/slate.postman_collection.json
+          --reporters cli,json
+          --reporter-json-export newman-report.json
+
+      - name: Upload the report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: newman-report
+          path: newman-report.json

@@ -53,6 +53,22 @@ pnpm install
 pnpm dev
 ```
 
+## Tests
+
+```bash
+# api — Pest against a real Postgres
+cd apps/api && php artisan test
+
+# web — Vitest + Testing Library (from repo root)
+pnpm test
+
+# api contract — Newman, against a running, seeded API
+npx newman run apps/api/postman/slate.postman_collection.json
+```
+
+CI runs all three on every PR to `main`, plus Pint, Biome, `tsc` and a production build.
+A red pipeline blocks the merge.
+
 ## Seeded demo credentials
 
 All demo users share the password `password` and are created by `DemoSeeder`.

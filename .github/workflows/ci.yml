@@ -15,7 +15,7 @@ env:
 
 jobs:
   api:
-    name: API (Pest)
+    name: API (Laravel)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -75,7 +75,7 @@ jobs:
         run: php artisan test
 
   web:
-    name: Web (Vitest)
+    name: Web (React)
     runs-on: ubuntu-latest
 
     steps:

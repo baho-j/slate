@@ -27,7 +27,7 @@ class LoginRequest extends FormRequest
     public function authenticate(): void
     {
         if (! Auth::attempt($this->only('email', 'password'), $this->boolean('remember'))) {
-            throw new AuthenticationException();
+            throw new AuthenticationException;
         }
 
         $this->session()->regenerate();

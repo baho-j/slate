@@ -1,5 +1,6 @@
 import { useNavigate } from '@tanstack/react-router'
 import { type FormEvent, useState } from 'react'
+import { homePathFor } from '@/components/layout/nav-items'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useLogin } from './hooks'
@@ -24,7 +25,7 @@ export function LoginPage() {
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault()
     mutate(credentials, {
-      onSuccess: () => navigate({ to: '/' }),
+      onSuccess: (user) => navigate({ to: homePathFor(user.role) }),
     })
   }
 

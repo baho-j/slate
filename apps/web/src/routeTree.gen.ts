@@ -12,7 +12,9 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as AppRouteImport } from './routes/_app'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as AppIndexRouteImport } from './routes/_app.index'
+import { Route as AppApplicationsRouteImport } from './routes/_app.applications'
 import { Route as AppCandidatesRouteImport } from './routes/_app.candidates'
+import { Route as AppInterviewsRouteImport } from './routes/_app.interviews'
 import { Route as AppJobsRouteImport } from './routes/_app.jobs'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 
@@ -30,9 +32,19 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppApplicationsRoute = AppApplicationsRouteImport.update({
+  id: '/applications',
+  path: '/applications',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppCandidatesRoute = AppCandidatesRouteImport.update({
   id: '/candidates',
   path: '/candidates',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppInterviewsRoute = AppInterviewsRouteImport.update({
+  id: '/interviews',
+  path: '/interviews',
   getParentRoute: () => AppRoute,
 } as any)
 const AppJobsRoute = AppJobsRouteImport.update({
@@ -49,13 +61,17 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
   '/login': typeof LoginRoute
+  '/applications': typeof AppApplicationsRoute
   '/candidates': typeof AppCandidatesRoute
+  '/interviews': typeof AppInterviewsRoute
   '/jobs': typeof AppJobsRoute
   '/settings': typeof AppSettingsRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
+  '/applications': typeof AppApplicationsRoute
   '/candidates': typeof AppCandidatesRoute
+  '/interviews': typeof AppInterviewsRoute
   '/jobs': typeof AppJobsRoute
   '/settings': typeof AppSettingsRoute
   '/': typeof AppIndexRoute
@@ -64,21 +80,39 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/_app': typeof AppRouteWithChildren
   '/login': typeof LoginRoute
+  '/_app/applications': typeof AppApplicationsRoute
   '/_app/candidates': typeof AppCandidatesRoute
+  '/_app/interviews': typeof AppInterviewsRoute
   '/_app/jobs': typeof AppJobsRoute
   '/_app/settings': typeof AppSettingsRoute
   '/_app/': typeof AppIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/login' | '/candidates' | '/jobs' | '/settings'
+  fullPaths:
+    | '/'
+    | '/login'
+    | '/applications'
+    | '/candidates'
+    | '/interviews'
+    | '/jobs'
+    | '/settings'
   fileRoutesByTo: FileRoutesByTo
-  to: '/login' | '/candidates' | '/jobs' | '/settings' | '/'
+  to:
+    | '/login'
+    | '/applications'
+    | '/candidates'
+    | '/interviews'
+    | '/jobs'
+    | '/settings'
+    | '/'
   id:
     | '__root__'
     | '/_app'
     | '/login'
+    | '/_app/applications'
     | '/_app/candidates'
+    | '/_app/interviews'
     | '/_app/jobs'
     | '/_app/settings'
     | '/_app/'
@@ -112,11 +146,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/applications': {
+      id: '/_app/applications'
+      path: '/applications'
+      fullPath: '/applications'
+      preLoaderRoute: typeof AppApplicationsRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/candidates': {
       id: '/_app/candidates'
       path: '/candidates'
       fullPath: '/candidates'
       preLoaderRoute: typeof AppCandidatesRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/interviews': {
+      id: '/_app/interviews'
+      path: '/interviews'
+      fullPath: '/interviews'
+      preLoaderRoute: typeof AppInterviewsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/jobs': {
@@ -137,14 +185,18 @@ declare module '@tanstack/react-router' {
 }
 
 interface AppRouteChildren {
+  AppApplicationsRoute: typeof AppApplicationsRoute
   AppCandidatesRoute: typeof AppCandidatesRoute
+  AppInterviewsRoute: typeof AppInterviewsRoute
   AppJobsRoute: typeof AppJobsRoute
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppApplicationsRoute: AppApplicationsRoute,
   AppCandidatesRoute: AppCandidatesRoute,
+  AppInterviewsRoute: AppInterviewsRoute,
   AppJobsRoute: AppJobsRoute,
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,

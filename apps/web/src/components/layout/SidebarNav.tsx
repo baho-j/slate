@@ -1,10 +1,15 @@
 import { Link } from '@tanstack/react-router'
-import { navItems } from './nav-items'
+import { useMe } from '@/features/auth/hooks'
+import { navItemsFor } from './nav-items'
 
 export function SidebarNav({ onNavigate }: { onNavigate?: () => void }) {
+  const { data: user } = useMe()
+
+  if (!user) return null
+
   return (
     <nav aria-label="Main" className="flex flex-col gap-1 p-3">
-      {navItems.map(({ label, to, icon: Icon }) => (
+      {navItemsFor(user.role).map(({ label, to, icon: Icon }) => (
         <Link
           key={to}
           to={to}

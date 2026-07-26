@@ -22,6 +22,11 @@ class UserResource extends JsonResource
             'email' => $this->email,
             'role' => $this->role->value,
             'organization_id' => $this->organization_id,
+            'organization' => $this->when($this->relationLoaded('organization') && $this->organization !== null, fn () => [
+                'id' => $this->organization->id,
+                'name' => $this->organization->name,
+                'slug' => $this->organization->slug,
+            ]),
         ];
     }
 }

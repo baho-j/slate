@@ -14,7 +14,7 @@ class AuthController extends Controller
     {
         $request->authenticate();
 
-        return new UserResource($request->user());
+        return new UserResource($request->user()->loadMissing('organization'));
     }
 
     public function logout(Request $request): JsonResponse
@@ -29,6 +29,6 @@ class AuthController extends Controller
 
     public function me(Request $request): UserResource
     {
-        return new UserResource($request->user());
+        return new UserResource($request->user()->loadMissing('organization'));
     }
 }

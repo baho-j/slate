@@ -1,5 +1,7 @@
 <?php
 
+use App\Enums\UserRole;
+use App\Models\Organization;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
@@ -52,6 +54,27 @@ test('me returns the authenticated user', function () {
 
 test('me requires authentication', function () {
     $this->getJson('/api/auth/me')->assertUnauthorized();
+});
+
+test('me embeds the organisation for a staff user', function () {
+    $organization = Organization::factory()->create(['name' => 'Acme']);
+    $user = User::factory()->for($organization)->create(['role' => UserRole::HrManager]);
+
+    $this->actingAs($user)
+        ->getJson('/api/auth/me')
+        ->assertOk()
+        ->assertJsonPath('data.organization.id', $organization->id)
+        ->assertJsonPath('data.organization.name', 'Acme')
+        ->assertJsonPath('data.organization.slug', $organization->slug);
+});
+
+test('me omits the organisation for an org-less user', function () {
+    $user = User::factory()->create(['role' => UserRole::SuperAdmin, 'organization_id' => null]);
+
+    $this->actingAs($user)
+        ->getJson('/api/auth/me')
+        ->assertOk()
+        ->assertJsonMissingPath('data.organization');
 });
 
 test('a user can log out', function () {

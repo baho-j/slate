@@ -24,6 +24,13 @@ class Job extends Model
 
     use HasOrganization;
 
+    /**
+     * @var array<string, mixed>
+     */
+    protected $attributes = [
+        'status' => JobStatus::Draft->value,
+    ];
+
     protected static function booted(): void
     {
         static::creating(function (Job $job) {

@@ -38,5 +38,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::get('/jobs/{job}/applications', [ApplicationController::class, 'index']);
     Route::get('/applications/{application}', [ApplicationController::class, 'show']);
+    Route::patch('/applications/{application}/stage', [ApplicationController::class, 'moveStage']);
     Route::get('/applications/{application}/documents/{document}/url', [ApplicationController::class, 'documentUrl']);
 });

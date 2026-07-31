@@ -26,6 +26,18 @@ export async function fetchApplication(applicationId: string): Promise<Applicati
   return data.data
 }
 
+export async function moveApplicationStage(
+  applicationId: string,
+  stageId: number,
+  note?: string,
+): Promise<ApplicationDetail> {
+  const { data } = await apiClient.patch<DetailResponse>(`/applications/${applicationId}/stage`, {
+    stage_id: stageId,
+    ...(note ? { note } : {}),
+  })
+  return data.data
+}
+
 export async function fetchCvDownloadUrl(
   applicationId: string,
   documentId: number,

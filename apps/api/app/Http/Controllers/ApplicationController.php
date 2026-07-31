@@ -2,12 +2,15 @@
 
 namespace App\Http\Controllers;
 
+use App\Actions\MoveApplicationStage;
 use App\Enums\ApplicationStatus;
+use App\Http\Requests\Applications\MoveApplicationStageRequest;
 use App\Http\Resources\ApplicationDetailResource;
 use App\Http\Resources\ApplicationResource;
 use App\Models\Application;
 use App\Models\ApplicationDocument;
 use App\Models\Job;
+use App\Models\PipelineStage;
 use App\Services\CvStorage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -52,6 +55,21 @@ class ApplicationController extends Controller
         $found->load(['candidate', 'currentStage', 'documents', 'statusHistory.toStage']);
 
         return ApplicationDetailResource::make($found);
+    }
+
+    public function moveStage(
+        MoveApplicationStageRequest $request,
+        MoveApplicationStage $move,
+        Application $application,
+    ): ApplicationDetailResource {
+        $this->authorize('updateStage', $application);
+
+        $toStage = PipelineStage::findOrFail($request->integer('stage_id'));
+        $move->handle($application, $toStage, $request->input('note'));
+
+        $application->load(['candidate', 'currentStage', 'documents', 'statusHistory.toStage']);
+
+        return ApplicationDetailResource::make($application);
     }
 
     public function documentUrl(CvStorage $cv, string $application, string $document): JsonResponse

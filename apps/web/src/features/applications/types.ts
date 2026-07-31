@@ -52,6 +52,7 @@ export interface ApplicationDetail {
     phone: string | null
   }
   current_stage: ApplicationStage | null
+  available_stages: ApplicationStage[]
   documents: ApplicationDocument[]
   status_history: ApplicationHistoryEntry[]
 }

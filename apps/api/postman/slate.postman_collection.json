@@ -1,7 +1,7 @@
 {
   "info": {
     "name": "Slate API",
-    "description": "Contract tests mirroring docs/04. Grows with each new resource.",
+    "description": "Contract tests mirroring docs/04, covering the M1 surface end to end: auth, jobs CRUD + publish, the public careers + apply flow (SAS/local CV upload), applications list/detail, and stage moves. Runs against a freshly seeded database (no jobs), creating its own data and chaining ids through collection variables.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "variable": [
@@ -20,6 +20,10 @@
     {
       "key": "password",
       "value": "password"
+    },
+    {
+      "key": "orgSlug",
+      "value": "acme"
     }
   ],
   "item": [
@@ -159,10 +163,6 @@
                 "value": "{{xsrf}}"
               }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{}"
-            },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
               "host": [
@@ -173,6 +173,10 @@
                 "auth",
                 "login"
               ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
             }
           },
           "event": [
@@ -214,10 +218,6 @@
                 "value": "{{xsrf}}"
               }
             ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\"email\":\"{{email}}\",\"password\":\"{{password}}\"}"
-            },
             "url": {
               "raw": "{{baseUrl}}/api/auth/login",
               "host": [
@@ -228,6 +228,10 @@
                 "auth",
                 "login"
               ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{email}}\",\"password\":\"{{password}}\"}"
             }
           },
           "event": [
@@ -244,7 +248,7 @@
                   "})",
                   "pm.test('never leaks the password hash', () => pm.expect(user).to.not.have.property('password'))",
                   "const jar = pm.cookies.jar()",
-                  "jar.get(pm.request.url.getHost(), 'XSRF-TOKEN', (err, value) => {",
+                  "jar.get(pm.variables.get('baseUrl'), 'XSRF-TOKEN', (err, value) => {",
                   "  if (value) pm.collectionVariables.set('xsrf', decodeURIComponent(value))",
                   "})"
                 ]
@@ -290,7 +294,749 @@
               }
             }
           ]
+        }
+      ]
+    },
+    {
+      "name": "Jobs",
+      "item": [
+        {
+          "name": "POST /api/jobs (validation)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              },
+              {
+                "key": "X-XSRF-TOKEN",
+                "value": "{{xsrf}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "jobs"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422 on missing fields', () => pm.response.to.have.status(422))",
+                  "const errors = pm.response.json().errors",
+                  "pm.test('names required fields', () => {",
+                  "  pm.expect(errors).to.have.property('title')",
+                  "  pm.expect(errors).to.have.property('description')",
+                  "  pm.expect(errors).to.have.property('employment_type')",
+                  "})"
+                ]
+              }
+            }
+          ]
         },
+        {
+          "name": "POST /api/jobs",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              },
+              {
+                "key": "X-XSRF-TOKEN",
+                "value": "{{xsrf}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "jobs"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\":\"Contract QA Engineer\",\"description\":\"Own our end to end test suite.\",\"department\":\"Engineering\",\"location\":\"Remote\",\"employment_type\":\"full_time\",\"salary_min\":70000,\"salary_max\":110000,\"currency\":\"USD\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201', () => pm.response.to.have.status(201))",
+                  "const job = pm.response.json().data",
+                  "pm.test('created as a draft', () => pm.expect(job.status).to.eql('draft'))",
+                  "pm.collectionVariables.set('jobId', job.id)"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/jobs/:job",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "jobs",
+                "{{jobId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "pm.test('is the created job', () => pm.expect(pm.response.json().data.id).to.eql(pm.collectionVariables.get('jobId')))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /api/jobs/:job",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              },
+              {
+                "key": "X-XSRF-TOKEN",
+                "value": "{{xsrf}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "jobs",
+                "{{jobId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"location\":\"Kigali\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "pm.test('applied the update', () => pm.expect(pm.response.json().data.location).to.eql('Kigali'))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/jobs/:job/publish",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              },
+              {
+                "key": "X-XSRF-TOKEN",
+                "value": "{{xsrf}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}/publish",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "jobs",
+                "{{jobId}}",
+                "publish"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "pm.test('now published', () => pm.expect(pm.response.json().data.status).to.eql('published'))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/jobs?status=published",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs?status=published",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "jobs"
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "published"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "const body = pm.response.json()",
+                  "pm.test('paginated envelope', () => {",
+                  "  pm.expect(body).to.have.property('data')",
+                  "  pm.expect(body).to.have.property('meta')",
+                  "})",
+                  "pm.test('includes our published job', () => pm.expect(body.data.map(j => j.id)).to.include(pm.collectionVariables.get('jobId')))"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Public careers",
+      "item": [
+        {
+          "name": "GET /api/public/o/:slug",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/o/{{orgSlug}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "o",
+                "{{orgSlug}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "const org = pm.response.json().data",
+                  "pm.test('public profile shape', () => {",
+                  "  pm.expect(org).to.have.property('slug')",
+                  "  pm.expect(org).to.not.have.property('id')",
+                  "})"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/public/o/:slug/jobs",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/o/{{orgSlug}}/jobs",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "o",
+                "{{orgSlug}}",
+                "jobs"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "const ids = pm.response.json().data.map(j => j.id)",
+                  "pm.test('lists our published job', () => pm.expect(ids).to.include(pm.collectionVariables.get('jobId')))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/public/o/:slug/jobs/:job",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/o/{{orgSlug}}/jobs/{{jobId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "o",
+                "{{orgSlug}}",
+                "jobs",
+                "{{jobId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "pm.test('hides internal fields', () => pm.expect(pm.response.json().data).to.not.have.property('status'))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/public/uploads/cv (init)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/uploads/cv",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "uploads",
+                "cv"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"filename\":\"cv.pdf\",\"content_type\":\"application/pdf\",\"size\":24}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201', () => pm.response.to.have.status(201))",
+                  "const target = pm.response.json()",
+                  "pm.test('returns an upload target', () => {",
+                  "  pm.expect(target).to.have.property('key')",
+                  "  pm.expect(target).to.have.property('url')",
+                  "})",
+                  "pm.collectionVariables.set('cvKey', target.key)",
+                  "pm.collectionVariables.set('cvUploadUrl', target.url)"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT cv upload target",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/pdf"
+              }
+            ],
+            "url": "{{cvUploadUrl}}",
+            "body": {
+              "mode": "raw",
+              "raw": "%PDF-1.4 minimal cv bytes"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('stored (200)', () => pm.response.to.have.status(200))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/public/o/:slug/jobs/:job/apply",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/o/{{orgSlug}}/jobs/{{jobId}}/apply",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "o",
+                "{{orgSlug}}",
+                "jobs",
+                "{{jobId}}",
+                "apply"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"full_name\":\"Casey Contract\",\"email\":\"casey.contract@example.com\",\"cover_note\":\"Contract QA is my thing.\",\"cv_key\":\"{{cvKey}}\",\"cv_original_name\":\"cv.pdf\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201', () => pm.response.to.have.status(201))",
+                  "pm.test('confirms submission', () => pm.expect(pm.response.json().message).to.be.a('string'))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST apply (duplicate)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/public/o/{{orgSlug}}/jobs/{{jobId}}/apply",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "o",
+                "{{orgSlug}}",
+                "jobs",
+                "{{jobId}}",
+                "apply"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"full_name\":\"Casey Contract\",\"email\":\"casey.contract@example.com\",\"cover_note\":\"Again.\",\"cv_key\":\"{{cvKey}}\",\"cv_original_name\":\"cv.pdf\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409 on a duplicate application', () => pm.response.to.have.status(409))"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Applications",
+      "item": [
+        {
+          "name": "GET /api/jobs/:job/applications",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}/applications",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "jobs",
+                "{{jobId}}",
+                "applications"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "const body = pm.response.json()",
+                  "pm.test('has our applicant', () => {",
+                  "  const found = body.data.find(a => a.candidate.email === 'casey.contract@example.com')",
+                  "  pm.expect(found, 'application present').to.be.an('object')",
+                  "  pm.collectionVariables.set('applicationId', found.id)",
+                  "})"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/applications/:application",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications",
+                "{{applicationId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "const app = pm.response.json().data",
+                  "pm.test('detail shape', () => {",
+                  "  pm.expect(app.candidate.full_name).to.eql('Casey Contract')",
+                  "  pm.expect(app.status_history).to.be.an('array')",
+                  "  pm.expect(app.available_stages.length).to.be.above(0)",
+                  "})",
+                  "const next = app.available_stages.find(s => s.id !== (app.current_stage && app.current_stage.id))",
+                  "pm.collectionVariables.set('nextStageId', next.id)"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /api/applications/:application/stage",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{origin}}"
+              },
+              {
+                "key": "X-XSRF-TOKEN",
+                "value": "{{xsrf}}"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}/stage",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications",
+                "{{applicationId}}",
+                "stage"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"stage_id\":{{nextStageId}},\"note\":\"Advancing via contract test.\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "const app = pm.response.json().data",
+                  "pm.test('moved to the new stage', () => pm.expect(app.current_stage.id).to.eql(pm.collectionVariables.get('nextStageId')))",
+                  "pm.test('logged a history row', () => pm.expect(app.status_history.length).to.be.above(1))"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Auth teardown",
+      "item": [
         {
           "name": "POST /api/auth/logout",
           "request": {

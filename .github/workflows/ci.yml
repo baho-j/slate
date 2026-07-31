@@ -167,6 +167,7 @@ jobs:
       - name: Run the collection
         run: >-
           npx --yes newman run apps/api/postman/slate.postman_collection.json
+          -e apps/api/postman/slate.local.postman_environment.json
           --reporters cli,json
           --reporter-json-export newman-report.json
 

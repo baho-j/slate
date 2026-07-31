@@ -28,6 +28,11 @@ class ApplicationPolicy
         return $this->isRecruiterPlus($user) && $user->organization_id === $application->organization_id;
     }
 
+    public function updateStage(User $user, Application $application): bool
+    {
+        return $this->isRecruiterPlus($user) && $user->organization_id === $application->organization_id;
+    }
+
     private function isRecruiterPlus(User $user): bool
     {
         return $user->hasRole(UserRole::HrManager, UserRole::Recruiter);

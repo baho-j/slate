@@ -6,6 +6,7 @@ import { useToast } from '@/components/ui/toast-context'
 import { ApplicationStatusBadge } from './ApplicationStatusBadge'
 import { fetchCvDownloadUrl } from './api'
 import { useApplication } from './hooks'
+import { StageMoveControl } from './StageMoveControl'
 import { StatusHistoryTimeline } from './StatusHistoryTimeline'
 import type { ApplicationDocument } from './types'
 
@@ -67,7 +68,11 @@ export function ApplicationDetailPage({
       </header>
 
       <section className="grid gap-4 sm:grid-cols-2">
-        <InfoCard label="Current stage" value={application.current_stage?.name ?? '—'} />
+        <StageMoveControl
+          applicationId={application.id}
+          currentStage={application.current_stage}
+          stages={application.available_stages}
+        />
         <InfoCard label="Applied" value={new Date(application.created_at).toLocaleDateString()} />
       </section>
 

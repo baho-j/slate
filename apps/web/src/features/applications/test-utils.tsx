@@ -35,6 +35,11 @@ export function makeDetail(overrides: Partial<ApplicationDetail> = {}): Applicat
     created_at: '2026-07-30T00:00:00+00:00',
     candidate: { full_name: 'Grace Hopper', email: 'grace@example.com', phone: '+123' },
     current_stage: { id: 1, name: 'Applied' },
+    available_stages: [
+      { id: 1, name: 'Applied' },
+      { id: 2, name: 'In Review' },
+      { id: 3, name: 'Interview' },
+    ],
     documents: [
       { id: 10, kind: 'cv', original_name: 'grace.pdf', mime: 'application/pdf', size_bytes: 1234 },
     ],

@@ -3,6 +3,7 @@
 namespace App\Http\Resources;
 
 use App\Models\Application;
+use App\Models\Pipeline;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -32,6 +33,7 @@ class ApplicationDetailResource extends JsonResource
                 'id' => $this->currentStage->id,
                 'name' => $this->currentStage->name,
             ] : null,
+            'available_stages' => $this->availableStages(),
             'documents' => $this->documents->map(fn ($document) => [
                 'id' => $document->id,
                 'kind' => $document->kind,
@@ -51,5 +53,19 @@ class ApplicationDetailResource extends JsonResource
                     'created_at' => $entry->created_at?->toIso8601String(),
                 ])->all(),
         ];
+    }
+
+    /**
+     * @return array<int, array{id: int, name: string}>
+     */
+    private function availableStages(): array
+    {
+        return Pipeline::query()
+            ->where('organization_id', $this->organization_id)
+            ->with('stages')
+            ->first()
+            ?->stages
+            ->map(fn ($stage) => ['id' => $stage->id, 'name' => $stage->name])
+            ->all() ?? [];
     }
 }

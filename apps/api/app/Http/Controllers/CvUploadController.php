@@ -6,6 +6,7 @@ use App\Http\Requests\Uploads\CvUploadRequest;
 use App\Services\CvStorage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class CvUploadController extends Controller
 {
@@ -33,5 +34,13 @@ class CvUploadController extends Controller
         $this->cv->disk()->put($key, $contents);
 
         return response()->json(['key' => $key], 200);
+    }
+
+    public function download(Request $request, string $key): StreamedResponse
+    {
+        abort_unless($request->hasValidSignature(), 403);
+        abort_unless($this->cv->exists($key), 404);
+
+        return $this->cv->disk()->download($key);
     }
 }

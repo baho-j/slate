@@ -1,3 +1,4 @@
+import { Link } from '@tanstack/react-router'
 import { MoreHorizontal } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -42,6 +43,11 @@ export function JobRowActions({ job, onEdit }: JobRowActionsProps) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuItem asChild>
+          <Link to="/jobs/$jobId/applications" params={{ jobId: job.id }}>
+            View applications
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onEdit(job)}>Edit</DropdownMenuItem>
         {job.status === 'draft' && (
           <DropdownMenuItem onSelect={handlePublish}>Publish</DropdownMenuItem>

@@ -17,8 +17,11 @@ import { Route as AppCandidatesRouteImport } from './routes/_app.candidates'
 import { Route as AppInterviewsRouteImport } from './routes/_app.interviews'
 import { Route as AppJobsRouteImport } from './routes/_app.jobs'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
+import { Route as AppJobsIndexRouteImport } from './routes/_app.jobs.index'
 import { Route as OOrgSlugIndexRouteImport } from './routes/o.$orgSlug.index'
 import { Route as OOrgSlugJobsJobIdRouteImport } from './routes/o.$orgSlug.jobs.$jobId'
+import { Route as AppJobsJobIdApplicationsIndexRouteImport } from './routes/_app.jobs.$jobId.applications.index'
+import { Route as AppJobsJobIdApplicationsApplicationIdRouteImport } from './routes/_app.jobs.$jobId.applications.$applicationId'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -59,6 +62,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AppRoute,
 } as any)
+const AppJobsIndexRoute = AppJobsIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppJobsRoute,
+} as any)
 const OOrgSlugIndexRoute = OOrgSlugIndexRouteImport.update({
   id: '/o/$orgSlug/',
   path: '/o/$orgSlug/',
@@ -69,6 +77,18 @@ const OOrgSlugJobsJobIdRoute = OOrgSlugJobsJobIdRouteImport.update({
   path: '/o/$orgSlug/jobs/$jobId',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppJobsJobIdApplicationsIndexRoute =
+  AppJobsJobIdApplicationsIndexRouteImport.update({
+    id: '/$jobId/applications/',
+    path: '/$jobId/applications/',
+    getParentRoute: () => AppJobsRoute,
+  } as any)
+const AppJobsJobIdApplicationsApplicationIdRoute =
+  AppJobsJobIdApplicationsApplicationIdRouteImport.update({
+    id: '/$jobId/applications/$applicationId',
+    path: '/$jobId/applications/$applicationId',
+    getParentRoute: () => AppJobsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -76,21 +96,26 @@ export interface FileRoutesByFullPath {
   '/applications': typeof AppApplicationsRoute
   '/candidates': typeof AppCandidatesRoute
   '/interviews': typeof AppInterviewsRoute
-  '/jobs': typeof AppJobsRoute
+  '/jobs': typeof AppJobsRouteWithChildren
   '/settings': typeof AppSettingsRoute
+  '/jobs/': typeof AppJobsIndexRoute
   '/o/$orgSlug/': typeof OOrgSlugIndexRoute
   '/o/$orgSlug/jobs/$jobId': typeof OOrgSlugJobsJobIdRoute
+  '/jobs/$jobId/applications/$applicationId': typeof AppJobsJobIdApplicationsApplicationIdRoute
+  '/jobs/$jobId/applications/': typeof AppJobsJobIdApplicationsIndexRoute
 }
 export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/applications': typeof AppApplicationsRoute
   '/candidates': typeof AppCandidatesRoute
   '/interviews': typeof AppInterviewsRoute
-  '/jobs': typeof AppJobsRoute
   '/settings': typeof AppSettingsRoute
   '/': typeof AppIndexRoute
+  '/jobs': typeof AppJobsIndexRoute
   '/o/$orgSlug': typeof OOrgSlugIndexRoute
   '/o/$orgSlug/jobs/$jobId': typeof OOrgSlugJobsJobIdRoute
+  '/jobs/$jobId/applications/$applicationId': typeof AppJobsJobIdApplicationsApplicationIdRoute
+  '/jobs/$jobId/applications': typeof AppJobsJobIdApplicationsIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -99,11 +124,14 @@ export interface FileRoutesById {
   '/_app/applications': typeof AppApplicationsRoute
   '/_app/candidates': typeof AppCandidatesRoute
   '/_app/interviews': typeof AppInterviewsRoute
-  '/_app/jobs': typeof AppJobsRoute
+  '/_app/jobs': typeof AppJobsRouteWithChildren
   '/_app/settings': typeof AppSettingsRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/jobs/': typeof AppJobsIndexRoute
   '/o/$orgSlug/': typeof OOrgSlugIndexRoute
   '/o/$orgSlug/jobs/$jobId': typeof OOrgSlugJobsJobIdRoute
+  '/_app/jobs/$jobId/applications/$applicationId': typeof AppJobsJobIdApplicationsApplicationIdRoute
+  '/_app/jobs/$jobId/applications/': typeof AppJobsJobIdApplicationsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -115,19 +143,24 @@ export interface FileRouteTypes {
     | '/interviews'
     | '/jobs'
     | '/settings'
+    | '/jobs/'
     | '/o/$orgSlug/'
     | '/o/$orgSlug/jobs/$jobId'
+    | '/jobs/$jobId/applications/$applicationId'
+    | '/jobs/$jobId/applications/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/login'
     | '/applications'
     | '/candidates'
     | '/interviews'
-    | '/jobs'
     | '/settings'
     | '/'
+    | '/jobs'
     | '/o/$orgSlug'
     | '/o/$orgSlug/jobs/$jobId'
+    | '/jobs/$jobId/applications/$applicationId'
+    | '/jobs/$jobId/applications'
   id:
     | '__root__'
     | '/_app'
@@ -138,8 +171,11 @@ export interface FileRouteTypes {
     | '/_app/jobs'
     | '/_app/settings'
     | '/_app/'
+    | '/_app/jobs/'
     | '/o/$orgSlug/'
     | '/o/$orgSlug/jobs/$jobId'
+    | '/_app/jobs/$jobId/applications/$applicationId'
+    | '/_app/jobs/$jobId/applications/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -207,6 +243,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/jobs/': {
+      id: '/_app/jobs/'
+      path: '/'
+      fullPath: '/jobs/'
+      preLoaderRoute: typeof AppJobsIndexRouteImport
+      parentRoute: typeof AppJobsRoute
+    }
     '/o/$orgSlug/': {
       id: '/o/$orgSlug/'
       path: '/o/$orgSlug'
@@ -221,14 +264,44 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OOrgSlugJobsJobIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/jobs/$jobId/applications/': {
+      id: '/_app/jobs/$jobId/applications/'
+      path: '/$jobId/applications'
+      fullPath: '/jobs/$jobId/applications/'
+      preLoaderRoute: typeof AppJobsJobIdApplicationsIndexRouteImport
+      parentRoute: typeof AppJobsRoute
+    }
+    '/_app/jobs/$jobId/applications/$applicationId': {
+      id: '/_app/jobs/$jobId/applications/$applicationId'
+      path: '/$jobId/applications/$applicationId'
+      fullPath: '/jobs/$jobId/applications/$applicationId'
+      preLoaderRoute: typeof AppJobsJobIdApplicationsApplicationIdRouteImport
+      parentRoute: typeof AppJobsRoute
+    }
   }
 }
+
+interface AppJobsRouteChildren {
+  AppJobsIndexRoute: typeof AppJobsIndexRoute
+  AppJobsJobIdApplicationsApplicationIdRoute: typeof AppJobsJobIdApplicationsApplicationIdRoute
+  AppJobsJobIdApplicationsIndexRoute: typeof AppJobsJobIdApplicationsIndexRoute
+}
+
+const AppJobsRouteChildren: AppJobsRouteChildren = {
+  AppJobsIndexRoute: AppJobsIndexRoute,
+  AppJobsJobIdApplicationsApplicationIdRoute:
+    AppJobsJobIdApplicationsApplicationIdRoute,
+  AppJobsJobIdApplicationsIndexRoute: AppJobsJobIdApplicationsIndexRoute,
+}
+
+const AppJobsRouteWithChildren =
+  AppJobsRoute._addFileChildren(AppJobsRouteChildren)
 
 interface AppRouteChildren {
   AppApplicationsRoute: typeof AppApplicationsRoute
   AppCandidatesRoute: typeof AppCandidatesRoute
   AppInterviewsRoute: typeof AppInterviewsRoute
-  AppJobsRoute: typeof AppJobsRoute
+  AppJobsRoute: typeof AppJobsRouteWithChildren
   AppSettingsRoute: typeof AppSettingsRoute
   AppIndexRoute: typeof AppIndexRoute
 }
@@ -237,7 +310,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppApplicationsRoute: AppApplicationsRoute,
   AppCandidatesRoute: AppCandidatesRoute,
   AppInterviewsRoute: AppInterviewsRoute,
-  AppJobsRoute: AppJobsRoute,
+  AppJobsRoute: AppJobsRouteWithChildren,
   AppSettingsRoute: AppSettingsRoute,
   AppIndexRoute: AppIndexRoute,
 }

@@ -44,6 +44,15 @@ describe('canAccess', () => {
   it('denies an unknown path rather than defaulting open', () => {
     expect(canAccess('super_admin', '/not-a-route')).toBe(false)
   })
+
+  it('grants access to a sub-path of an allowed section', () => {
+    expect(canAccess('recruiter', '/jobs/abc/applications')).toBe(true)
+    expect(canAccess('recruiter', '/jobs/abc/applications/xyz')).toBe(true)
+  })
+
+  it('does not let a sub-path leak access a role lacks', () => {
+    expect(canAccess('interviewer', '/jobs/abc/applications')).toBe(false)
+  })
 })
 
 describe('homePathFor', () => {

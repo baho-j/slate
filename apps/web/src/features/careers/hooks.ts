@@ -1,6 +1,12 @@
-import { keepPreviousData, useQuery } from '@tanstack/react-query'
+import { keepPreviousData, useMutation, useQuery } from '@tanstack/react-query'
 import type { AxiosError } from 'axios'
-import { fetchPublicJob, fetchPublicJobs, fetchPublicOrganization } from './api'
+import {
+  fetchPublicJob,
+  fetchPublicJobs,
+  fetchPublicOrganization,
+  submitApplication,
+  uploadCv,
+} from './api'
 import type { Paginated, PublicJob, PublicJobListParams, PublicOrganization } from './types'
 
 function retryPublic(failureCount: number, error: AxiosError): boolean {
@@ -41,5 +47,25 @@ export function usePublicJob(slug: string, jobId: string) {
     queryKey: careersKeys.job(slug, jobId),
     queryFn: () => fetchPublicJob(slug, jobId),
     retry: retryPublic,
+  })
+}
+
+interface ApplyVariables {
+  full_name: string
+  email: string
+  cover_note: string | null
+  cv: File
+}
+
+export function useApplyToJob(slug: string, jobId: string) {
+  return useMutation<void, AxiosError<{ message?: string }>, ApplyVariables>({
+    mutationFn: async ({ cv, ...fields }) => {
+      const { key, originalName } = await uploadCv(cv)
+      await submitApplication(slug, jobId, {
+        ...fields,
+        cv_key: key,
+        cv_original_name: originalName,
+      })
+    },
   })
 }

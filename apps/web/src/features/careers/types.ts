@@ -27,3 +27,18 @@ export interface PublicJobListParams {
   q?: string
   page?: number
 }
+
+export interface CvUploadTarget {
+  key: string
+  url: string
+  method: string
+  headers: Record<string, string>
+}
+
+export interface ApplicationInput {
+  full_name: string
+  email: string
+  cover_note: string | null
+  cv_key: string
+  cv_original_name: string
+}

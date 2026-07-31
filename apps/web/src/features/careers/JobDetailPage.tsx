@@ -1,6 +1,7 @@
 import { Link } from '@tanstack/react-router'
 import { ArrowLeft, MapPin } from 'lucide-react'
 import { employmentTypeLabels } from '@/features/jobs/constants'
+import { ApplyForm } from './ApplyForm'
 import { CareersShell } from './CareersShell'
 import { formatSalaryRange } from './format'
 import { usePublicJob, usePublicOrganization } from './hooks'
@@ -76,6 +77,10 @@ export function JobDetailPage({ orgSlug, jobId }: { orgSlug: string; jobId: stri
             Applications close {new Date(job.closing_date).toLocaleDateString()}
           </p>
         )}
+
+        <hr className="border-n-200" />
+
+        <ApplyForm orgSlug={orgSlug} jobId={jobId} />
       </article>
     </CareersShell>
   )

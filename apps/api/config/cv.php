@@ -7,11 +7,9 @@ return [
 
     'mime_types' => [
         'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
     ],
 
-    'extensions' => ['pdf', 'doc', 'docx'],
+    'extensions' => ['pdf'],
 
     'url_ttl_minutes' => 10,
 ];

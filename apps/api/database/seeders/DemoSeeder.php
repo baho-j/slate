@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Actions\EnsureDefaultPipeline;
 use App\Enums\UserRole;
 use App\Models\Organization;
 use App\Models\User;
@@ -14,6 +15,10 @@ class DemoSeeder extends Seeder
     {
         $acme = $this->organization('acme', 'Acme Inc.', 'https://acme.test');
         $globex = $this->organization('globex', 'Globex Corporation', 'https://globex.test');
+
+        $pipelines = app(EnsureDefaultPipeline::class);
+        $pipelines->forOrganization($acme);
+        $pipelines->forOrganization($globex);
 
         $this->user('admin@slate.test', 'Ada Admin', UserRole::SuperAdmin, null);
         $this->user('candidate@slate.test', 'Cora Candidate', UserRole::Candidate, null);

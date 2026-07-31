@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CvUploadController;
 use App\Http\Controllers\HealthController;
@@ -22,6 +23,9 @@ Route::middleware('throttle:public')->prefix('public')->group(function () {
     Route::put('/uploads/cv/{key}', [CvUploadController::class, 'put'])
         ->where('key', 'cv/.*')
         ->name('public.uploads.cv.put');
+    Route::get('/uploads/cv/{key}', [CvUploadController::class, 'download'])
+        ->where('key', 'cv/.*')
+        ->name('applications.cv.download');
 });
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -31,4 +35,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/jobs/{job}/publish', [JobController::class, 'publish']);
     Route::post('/jobs/{job}/close', [JobController::class, 'close']);
     Route::apiResource('jobs', JobController::class);
+
+    Route::get('/jobs/{job}/applications', [ApplicationController::class, 'index']);
+    Route::get('/applications/{application}', [ApplicationController::class, 'show']);
+    Route::get('/applications/{application}/documents/{document}/url', [ApplicationController::class, 'documentUrl']);
 });

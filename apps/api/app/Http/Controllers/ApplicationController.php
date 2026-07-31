@@ -1,0 +1,83 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Enums\ApplicationStatus;
+use App\Http\Resources\ApplicationDetailResource;
+use App\Http\Resources\ApplicationResource;
+use App\Models\Application;
+use App\Models\ApplicationDocument;
+use App\Models\Job;
+use App\Services\CvStorage;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+
+class ApplicationController extends Controller
+{
+    public function index(Request $request, Job $job): AnonymousResourceCollection
+    {
+        $this->authorize('viewAnyForJob', [Application::class, $job]);
+
+        $validated = $request->validate([
+            'stage' => ['sometimes', 'integer'],
+            'status' => ['sometimes', 'string', 'in:'.implode(',', array_column(ApplicationStatus::cases(), 'value'))],
+            'q' => ['sometimes', 'string', 'max:255'],
+            'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        $applications = $job->applications()
+            ->with(['candidate', 'currentStage'])
+            ->when($validated['stage'] ?? null, fn ($query, $stage) => $query->where('current_stage_id', $stage))
+            ->when($validated['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
+            ->when($validated['q'] ?? null, fn ($query, $term) => $query->whereHas(
+                'candidate',
+                fn ($candidate) => $candidate
+                    ->where('full_name', 'ilike', "%{$term}%")
+                    ->orWhere('email', 'ilike', "%{$term}%")
+            ))
+            ->latest()
+            ->paginate($validated['per_page'] ?? 20)
+            ->withQueryString();
+
+        return ApplicationResource::collection($applications);
+    }
+
+    public function show(string $application): ApplicationDetailResource
+    {
+        $found = $this->resolveApplication($application);
+
+        $this->authorize('view', $found);
+
+        $found->load(['candidate', 'currentStage', 'documents', 'statusHistory.toStage']);
+
+        return ApplicationDetailResource::make($found);
+    }
+
+    public function documentUrl(CvStorage $cv, string $application, string $document): JsonResponse
+    {
+        $found = $this->resolveApplication($application);
+
+        $this->authorize('view', $found);
+
+        $doc = ApplicationDocument::where('application_id', $found->id)->findOrFail($document);
+
+        return response()->json([
+            'url' => $cv->downloadUrl($doc->blob_path),
+        ]);
+    }
+
+    private function resolveApplication(string $id): Application
+    {
+        $query = Application::query()->with('candidate');
+
+        // Candidates have no organization, so the org global scope would hide even
+        // their own application; drop it for them and let the policy gate ownership.
+        // Staff keep the scope so cross-org rows 404 instead of leaking via a 403.
+        if (auth()->user()?->isCandidate()) {
+            $query->withoutGlobalScopes();
+        }
+
+        return $query->findOrFail($id);
+    }
+}

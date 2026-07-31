@@ -56,6 +56,22 @@ class CvStorage
         ];
     }
 
+    /**
+     * A short-lived download URL for a stored CV. On Azure this is a SAS GET URL;
+     * in local dev it's a signed route that streams the file.
+     */
+    public function downloadUrl(string $key): string
+    {
+        $expiresAt = now()->addMinutes((int) config('cv.url_ttl_minutes'));
+        $disk = $this->disk();
+
+        if ($this->usesRemoteBlobStore() && $disk instanceof FilesystemAdapter) {
+            return $disk->temporaryUrl($key, $expiresAt);
+        }
+
+        return URL::temporarySignedRoute('applications.cv.download', $expiresAt, ['key' => $key]);
+    }
+
     public function exists(string $key): bool
     {
         return $this->disk()->exists($key);

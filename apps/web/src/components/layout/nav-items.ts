@@ -30,7 +30,10 @@ export function navItemsFor(role: UserRole): NavItem[] {
 }
 
 export function canAccess(role: UserRole, path: string): boolean {
-  return navItems.find((item) => item.to === path)?.roles.includes(role) ?? false
+  const match = navItems.find(
+    (item) => item.to === path || (item.to !== '/' && path.startsWith(`${item.to}/`)),
+  )
+  return match?.roles.includes(role) ?? false
 }
 
 /** Where a role lands after login — candidates have no dashboard. */

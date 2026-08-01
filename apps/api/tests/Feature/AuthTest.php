@@ -20,9 +20,25 @@ test('a user can log in with valid credentials', function () {
     $response->assertOk()
         ->assertJsonPath('data.id', $user->id)
         ->assertJsonPath('data.email', $user->email)
-        ->assertJsonMissingPath('data.password');
+        ->assertJsonMissingPath('data.password')
+        ->assertJsonStructure(['data', 'token']);
 
-    $this->assertAuthenticatedAs($user);
+    expect($response->json('token'))->toBeString()->not->toBeEmpty();
+    expect($user->tokens()->count())->toBe(1);
+});
+
+test('a bearer token from login authenticates subsequent requests', function () {
+    $user = User::factory()->create(['password' => Hash::make('secret-pass')]);
+
+    $token = $this->postJson('/api/auth/login', [
+        'email' => $user->email,
+        'password' => 'secret-pass',
+    ])->json('token');
+
+    $this->withHeader('Authorization', "Bearer {$token}")
+        ->getJson('/api/auth/me')
+        ->assertOk()
+        ->assertJsonPath('data.id', $user->id);
 });
 
 test('login fails with the wrong password', function () {

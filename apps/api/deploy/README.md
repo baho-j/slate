@@ -12,9 +12,9 @@ Slate deploys to Azure as a fully managed stack. A push to `main` triggers
 | Database  | Azure Database for PostgreSQL (Flexible) | `sslmode=require` |
 | CV files  | Blob Storage private container       | SAS upload/download |
 
-The SPA and API are on separate hosts, so auth uses cross-site cookies:
-`SESSION_SAME_SITE=none`, `SESSION_SECURE_COOKIE=true`, `SANCTUM_STATEFUL_DOMAINS`
-set to the SPA host, and CORS (`FRONTEND_URL`) allows the SPA origin with credentials.
+The SPA and API are on separate hosts, so auth uses Sanctum personal access tokens
+instead of cookies: login returns a bearer token, the SPA stores it and sends
+`Authorization: Bearer`, and CORS (`FRONTEND_URL`) allows the SPA origin.
 
 ## App Service specifics
 
@@ -26,7 +26,7 @@ set to the SPA host, and CORS (`FRONTEND_URL`) allows the SPA origin with creden
 
 ## CD credentials (GitHub secrets)
 
-- `AZURE_WEBAPP_PUBLISH_PROFILE` — App Service publish profile (API deploy + Kudu migrate)
+- `AZURE_WEBAPP_PUBLISH_PROFILE` — App Service publish profile (API deploy)
 - `AZURE_WEBAPP_NAME` — the web app name
 - `AZURE_SPA_ACCOUNT` / `AZURE_SPA_STORAGE_KEY` — the SPA storage account + key (blob upload)
 

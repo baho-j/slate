@@ -1,0 +1,74 @@
+name: Deploy
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: '22'
+  PHP_VERSION: '8.3'
+  API_URL: https://slate-api-3412.azurewebsites.net
+
+jobs:
+  deploy-spa:
+    name: Deploy SPA to Blob
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Build the SPA
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter web run build
+        env:
+          VITE_API_URL: ${{ env.API_URL }}/api
+
+      - name: Upload to the $web container
+        uses: azure/CLI@v2
+        with:
+          inlineScript: |
+            az storage blob upload-batch \
+              --account-name ${{ secrets.AZURE_SPA_ACCOUNT }} \
+              --account-key '${{ secrets.AZURE_SPA_STORAGE_KEY }}' \
+              --destination '$web' \
+              --source apps/web/dist \
+              --overwrite true
+
+  deploy-api:
+    name: Deploy API to App Service
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, pdo_pgsql, openssl, fileinfo, curl, zip, intl, bcmath
+          coverage: none
+
+      - name: Install PHP dependencies
+        working-directory: apps/api
+        run: composer install --no-dev --prefer-dist --no-progress --optimize-autoloader
+
+      - name: Deploy to App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ secrets.AZURE_WEBAPP_NAME }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: apps/api
+
+      # Migrations, seeding and config/route caching run from deploy/startup.sh on the
+      # runtime container each start (the SCM/Kudu container has no PHP), so nothing to do here.

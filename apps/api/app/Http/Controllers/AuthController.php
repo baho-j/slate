@@ -4,31 +4,40 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Auth\LoginRequest;
 use App\Http\Resources\UserResource;
+use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use Laravel\Sanctum\PersonalAccessToken;
 
 class AuthController extends Controller
 {
-    public function login(LoginRequest $request): UserResource
+    public function login(LoginRequest $request): JsonResponse
     {
-        $request->authenticate();
+        $user = $request->authenticateUser();
 
-        return new UserResource($request->user()->loadMissing('organization'));
+        $token = $user->createToken('spa')->plainTextToken;
+
+        return UserResource::make($user->loadMissing('organization'))
+            ->additional(['token' => $token])
+            ->response();
     }
 
     public function logout(Request $request): JsonResponse
     {
-        Auth::guard('web')->logout();
+        $token = $request->user()?->currentAccessToken();
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
+        if ($token instanceof PersonalAccessToken) {
+            $token->delete();
+        }
 
         return response()->json(status: 204);
     }
 
     public function me(Request $request): UserResource
     {
-        return new UserResource($request->user()->loadMissing('organization'));
+        /** @var User $user */
+        $user = $request->user();
+
+        return UserResource::make($user->loadMissing('organization'));
     }
 }

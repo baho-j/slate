@@ -104,44 +104,6 @@
           ]
         },
         {
-          "name": "GET /sanctum/csrf-cookie",
-          "request": {
-            "method": "GET",
-            "header": [
-              {
-                "key": "Origin",
-                "value": "{{origin}}"
-              }
-            ],
-            "url": {
-              "raw": "{{baseUrl}}/sanctum/csrf-cookie",
-              "host": [
-                "{{baseUrl}}"
-              ],
-              "path": [
-                "sanctum",
-                "csrf-cookie"
-              ]
-            }
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "pm.test('204', () => pm.response.to.have.status(204))",
-                  "const jar = pm.cookies.jar()",
-                  "jar.get(pm.variables.get('baseUrl'), 'XSRF-TOKEN', (err, value) => {",
-                  "  pm.test('issues an XSRF cookie', () => pm.expect(value).to.be.a('string'))",
-                  "  if (value) pm.collectionVariables.set('xsrf', decodeURIComponent(value))",
-                  "})"
-                ]
-              }
-            }
-          ]
-        },
-        {
           "name": "POST /api/auth/login (validation)",
           "request": {
             "method": "POST",
@@ -153,14 +115,6 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
-              },
-              {
-                "key": "Origin",
-                "value": "{{origin}}"
-              },
-              {
-                "key": "X-XSRF-TOKEN",
-                "value": "{{xsrf}}"
               }
             ],
             "url": {
@@ -208,14 +162,6 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
-              },
-              {
-                "key": "Origin",
-                "value": "{{origin}}"
-              },
-              {
-                "key": "X-XSRF-TOKEN",
-                "value": "{{xsrf}}"
               }
             ],
             "url": {
@@ -247,10 +193,8 @@
                   "  pm.expect(user).to.have.property('role')",
                   "})",
                   "pm.test('never leaks the password hash', () => pm.expect(user).to.not.have.property('password'))",
-                  "const jar = pm.cookies.jar()",
-                  "jar.get(pm.variables.get('baseUrl'), 'XSRF-TOKEN', (err, value) => {",
-                  "  if (value) pm.collectionVariables.set('xsrf', decodeURIComponent(value))",
-                  "})"
+                  "pm.test('returns a token', () => pm.expect(pm.response.json().token).to.be.a('string'))",
+                  "pm.collectionVariables.set('token', pm.response.json().token)"
                 ]
               }
             }
@@ -264,10 +208,6 @@
               {
                 "key": "Accept",
                 "value": "application/json"
-              },
-              {
-                "key": "Origin",
-                "value": "{{origin}}"
               }
             ],
             "url": {
@@ -312,14 +252,6 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
-              },
-              {
-                "key": "Origin",
-                "value": "{{origin}}"
-              },
-              {
-                "key": "X-XSRF-TOKEN",
-                "value": "{{xsrf}}"
               }
             ],
             "url": {
@@ -367,14 +299,6 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
-              },
-              {
-                "key": "Origin",
-                "value": "{{origin}}"
-              },
-              {
-                "key": "X-XSRF-TOKEN",
-                "value": "{{xsrf}}"
               }
             ],
             "url": {
@@ -415,10 +339,6 @@
               {
                 "key": "Accept",
                 "value": "application/json"
-              },
-              {
-                "key": "Origin",
-                "value": "{{origin}}"
               }
             ],
             "url": {
@@ -458,14 +378,6 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
-              },
-              {
-                "key": "Origin",
-                "value": "{{origin}}"
-              },
-              {
-                "key": "X-XSRF-TOKEN",
-                "value": "{{xsrf}}"
               }
             ],
             "url": {
@@ -505,14 +417,6 @@
               {
                 "key": "Accept",
                 "value": "application/json"
-              },
-              {
-                "key": "Origin",
-                "value": "{{origin}}"
-              },
-              {
-                "key": "X-XSRF-TOKEN",
-                "value": "{{xsrf}}"
               }
             ],
             "url": {
@@ -549,10 +453,6 @@
               {
                 "key": "Accept",
                 "value": "application/json"
-              },
-              {
-                "key": "Origin",
-                "value": "{{origin}}"
               }
             ],
             "url": {
@@ -895,10 +795,6 @@
               {
                 "key": "Accept",
                 "value": "application/json"
-              },
-              {
-                "key": "Origin",
-                "value": "{{origin}}"
               }
             ],
             "url": {
@@ -940,10 +836,6 @@
               {
                 "key": "Accept",
                 "value": "application/json"
-              },
-              {
-                "key": "Origin",
-                "value": "{{origin}}"
               }
             ],
             "url": {
@@ -990,14 +882,6 @@
               {
                 "key": "Content-Type",
                 "value": "application/json"
-              },
-              {
-                "key": "Origin",
-                "value": "{{origin}}"
-              },
-              {
-                "key": "X-XSRF-TOKEN",
-                "value": "{{xsrf}}"
               }
             ],
             "url": {
@@ -1045,14 +929,6 @@
               {
                 "key": "Accept",
                 "value": "application/json"
-              },
-              {
-                "key": "Origin",
-                "value": "{{origin}}"
-              },
-              {
-                "key": "X-XSRF-TOKEN",
-                "value": "{{xsrf}}"
               }
             ],
             "url": {
@@ -1087,10 +963,6 @@
               {
                 "key": "Accept",
                 "value": "application/json"
-              },
-              {
-                "key": "Origin",
-                "value": "{{origin}}"
               }
             ],
             "url": {
@@ -1119,5 +991,15 @@
         }
       ]
     }
-  ]
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{token}}",
+        "type": "string"
+      }
+    ]
+  }
 }

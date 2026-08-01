@@ -18,12 +18,11 @@ set to the SPA host, and CORS (`FRONTEND_URL`) allows the SPA origin with creden
 
 ## App Service specifics
 
-- `nginx-default` repoints the built-in nginx document root to `public/` and routes
-  through `index.php`. It's applied by the startup command
-  `cp .../deploy/nginx-default /etc/nginx/sites-available/default && service nginx reload`.
+- `startup.sh` is the App Service startup command. It repoints the built-in nginx document root
+  to `public/` (via `nginx-default`), then runs `migrate --force`, seeds the demo data, and
+  caches config/routes. It runs in the runtime container on each start (the Kudu/SCM container
+  has no PHP, so migrations can't run there), and everything it does is idempotent.
 - Server-side Oryx build is disabled; CI ships a prebuilt `vendor/` (`composer install --no-dev`).
-- After each deploy the workflow runs `php artisan migrate --force` (plus config/route cache)
-  on the app host via the Kudu command API.
 
 ## CD credentials (GitHub secrets)
 

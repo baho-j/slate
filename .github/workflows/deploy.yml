@@ -70,23 +70,5 @@ jobs:
           publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
           package: apps/api
 
-      - name: Run migrations on the app host
-        run: |
-          creds=$(python3 - <<'PY'
-          import sys, xml.etree.ElementTree as ET, os
-          xml = os.environ["PUBLISH_PROFILE"]
-          root = ET.fromstring(xml)
-          for p in root.findall("publishProfile"):
-              if p.get("publishMethod") == "MSDeploy":
-                  print(f'{p.get("userName")}:{p.get("userPWD")}')
-                  break
-          PY
-          )
-          scm="${AZURE_WEBAPP_NAME}.scm.azurewebsites.net"
-          curl -sS -f -u "$creds" \
-            -H "Content-Type: application/json" \
-            -X POST "https://$scm/api/command" \
-            -d '{"command":"php artisan migrate --force && php artisan config:cache && php artisan route:cache","dir":"site/wwwroot"}'
-        env:
-          PUBLISH_PROFILE: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
-          AZURE_WEBAPP_NAME: ${{ secrets.AZURE_WEBAPP_NAME }}
+      # Migrations, seeding and config/route caching run from deploy/startup.sh on the
+      # runtime container each start (the SCM/Kudu container has no PHP), so nothing to do here.

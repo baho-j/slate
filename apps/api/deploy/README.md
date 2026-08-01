@@ -12,9 +12,9 @@ Slate deploys to Azure as a fully managed stack. A push to `main` triggers
 | Database  | Azure Database for PostgreSQL (Flexible) | `sslmode=require` |
 | CV files  | Blob Storage private container       | SAS upload/download |
 
-The SPA and API are on separate hosts, so auth uses cross-site cookies:
-`SESSION_SAME_SITE=none`, `SESSION_SECURE_COOKIE=true`, `SANCTUM_STATEFUL_DOMAINS`
-set to the SPA host, and CORS (`FRONTEND_URL`) allows the SPA origin with credentials.
+The SPA and API are on separate hosts, so auth uses Sanctum personal access tokens
+instead of cookies: login returns a bearer token, the SPA stores it and sends
+`Authorization: Bearer`, and CORS (`FRONTEND_URL`) allows the SPA origin.
 
 ## App Service specifics
 
@@ -23,8 +23,6 @@ set to the SPA host, and CORS (`FRONTEND_URL`) allows the SPA origin with creden
   caches config/routes. It runs in the runtime container on each start (the Kudu/SCM container
   has no PHP, so migrations can't run there), and everything it does is idempotent.
 - Server-side Oryx build is disabled; CI ships a prebuilt `vendor/` (`composer install --no-dev`).
-- `SESSION_DRIVER=cookie` in production — the SPA and API are on separate hosts, so sessions ride
-  encrypted client cookies (no `sessions` table, nothing to share across App Service instances).
 
 ## CD credentials (GitHub secrets)
 

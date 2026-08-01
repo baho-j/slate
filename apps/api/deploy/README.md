@@ -23,10 +23,12 @@ set to the SPA host, and CORS (`FRONTEND_URL`) allows the SPA origin with creden
   caches config/routes. It runs in the runtime container on each start (the Kudu/SCM container
   has no PHP, so migrations can't run there), and everything it does is idempotent.
 - Server-side Oryx build is disabled; CI ships a prebuilt `vendor/` (`composer install --no-dev`).
+- `SESSION_DRIVER=cookie` in production — the SPA and API are on separate hosts, so sessions ride
+  encrypted client cookies (no `sessions` table, nothing to share across App Service instances).
 
 ## CD credentials (GitHub secrets)
 
-- `AZURE_WEBAPP_PUBLISH_PROFILE` — App Service publish profile (API deploy + Kudu migrate)
+- `AZURE_WEBAPP_PUBLISH_PROFILE` — App Service publish profile (API deploy)
 - `AZURE_WEBAPP_NAME` — the web app name
 - `AZURE_SPA_ACCOUNT` / `AZURE_SPA_STORAGE_KEY` — the SPA storage account + key (blob upload)
 

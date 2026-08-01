@@ -14,6 +14,32 @@ env:
   NODE_VERSION: '22'
 
 jobs:
+  pr-template:
+    name: PR template
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check the description follows the template
+        env:
+          BODY: ${{ github.event.pull_request.body }}
+        run: |
+          fail=0
+          check() {
+            if ! grep -qF "$1" <<<"$BODY"; then
+              echo "::error::PR description is missing: $1"
+              fail=1
+            fi
+          }
+          check "Closes #"
+          check "## What changed & why"
+          check "## How it was tested"
+          check "## Definition of done"
+          if [ "$fail" -ne 0 ]; then
+            echo "Fill in .github/pull_request_template.md before merging."
+            exit 1
+          fi
+          echo "PR description follows the template."
+
   api:
     name: API (Laravel)
     runs-on: ubuntu-latest

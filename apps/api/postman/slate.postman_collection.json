@@ -493,6 +493,141 @@
       ]
     },
     {
+      "name": "Application fields",
+      "item": [
+        {
+          "name": "PUT /api/jobs/:job/fields",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}/fields",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "jobs",
+                "{{jobId}}",
+                "fields"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fields\": [{\"label\": \"Years of experience\", \"key\": \"years_experience\", \"type\": \"number\", \"required\": true, \"order\": 0}, {\"label\": \"Skills\", \"key\": \"skills\", \"type\": \"multiselect\", \"required\": false, \"order\": 1, \"options\": [\"php\", \"react\", \"go\"]}]}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "const fieldsData = pm.response.json().data",
+                  "pm.test('replaced with two ordered fields', () => {",
+                  "  pm.expect(fieldsData).to.have.lengthOf(2)",
+                  "  pm.expect(fieldsData[0].key).to.eql('years_experience')",
+                  "  pm.expect(fieldsData[1].options).to.eql(['php','react','go'])",
+                  "})"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /api/jobs/:job/fields (validation)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}/fields",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "jobs",
+                "{{jobId}}",
+                "fields"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"fields\": [{\"label\": \"Bad\", \"key\": \"Bad Key\", \"type\": \"number\", \"required\": true, \"order\": 0}]}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422', () => pm.response.to.have.status(422))",
+                  "pm.test('flags the key', () => pm.expect(pm.response.json().errors).to.have.property('fields.0.key'))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/jobs/:job/fields",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}/fields",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "jobs",
+                "{{jobId}}",
+                "fields"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "const keys = pm.response.json().data.map(f => f.key)",
+                  "pm.test('returns the replaced set in order', () => pm.expect(keys).to.eql(['years_experience','skills']))"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Public careers",
       "item": [
         {

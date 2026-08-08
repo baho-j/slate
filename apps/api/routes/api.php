@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ApplicationController;
+use App\Http\Controllers\ApplicationFieldController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CvUploadController;
 use App\Http\Controllers\HealthController;
@@ -34,6 +35,8 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::post('/jobs/{job}/publish', [JobController::class, 'publish']);
     Route::post('/jobs/{job}/close', [JobController::class, 'close']);
+    Route::get('/jobs/{job}/fields', [ApplicationFieldController::class, 'index']);
+    Route::put('/jobs/{job}/fields', [ApplicationFieldController::class, 'replace']);
     Route::apiResource('jobs', JobController::class);
 
     Route::get('/jobs/{job}/applications', [ApplicationController::class, 'index']);

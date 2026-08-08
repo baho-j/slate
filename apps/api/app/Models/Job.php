@@ -61,4 +61,10 @@ class Job extends Model
     {
         return $this->hasMany(Application::class);
     }
+
+    /** @return HasMany<ApplicationField, $this> */
+    public function applicationFields(): HasMany
+    {
+        return $this->hasMany(ApplicationField::class)->orderBy('order');
+    }
 }

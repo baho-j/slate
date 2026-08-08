@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Models\Job;
 use App\Models\Organization;
 use App\Models\User;
 use Database\Seeders\DemoSeeder;
@@ -48,10 +49,26 @@ test('every demo account can log in with the shared password', function (string 
     'candidate@slate.test',
 ]);
 
+test('it seeds two jobs carrying populated typed fields', function () {
+    $admin = User::where('email', 'admin@slate.test')->first();
+    $this->actingAs($admin);
+
+    $jobs = Job::has('applicationFields')->get();
+
+    expect($jobs)->toHaveCount(2);
+
+    $fields = $jobs->first()->applicationFields;
+
+    expect($fields->pluck('key')->all())
+        ->toBe(['years_experience', 'has_work_permit', 'skills', 'degree']);
+});
+
 test('seeding is idempotent', function () {
     $before = User::count();
+    $beforeJobs = Job::withoutGlobalScopes()->count();
 
     $this->seed(DemoSeeder::class);
 
-    expect(User::count())->toBe($before);
+    expect(User::count())->toBe($before)
+        ->and(Job::withoutGlobalScopes()->count())->toBe($beforeJobs);
 });

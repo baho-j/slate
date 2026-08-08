@@ -67,4 +67,10 @@ class Job extends Model
     {
         return $this->hasMany(ApplicationField::class)->orderBy('order');
     }
+
+    /** @return HasMany<ScreeningCriterion, $this> */
+    public function screeningCriteria(): HasMany
+    {
+        return $this->hasMany(ScreeningCriterion::class);
+    }
 }

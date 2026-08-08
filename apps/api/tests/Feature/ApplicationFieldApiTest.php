@@ -5,6 +5,7 @@ use App\Enums\UserRole;
 use App\Models\ApplicationField;
 use App\Models\Job;
 use App\Models\Organization;
+use App\Models\ScreeningCriterion;
 use App\Models\User;
 
 beforeEach(function () {
@@ -136,6 +137,29 @@ test('fields on a job from another org return 404', function () {
     $this->actingAs($this->recruiter)
         ->putJson("/api/jobs/{$foreign->id}/fields", fieldPayload([validField()]))
         ->assertNotFound();
+});
+
+test('put refuses to remove a field referenced by screening criteria', function () {
+    ApplicationField::factory()->for($this->job)->create(['key' => 'years_experience']);
+    ScreeningCriterion::factory()->for($this->job)->create(['field_key' => 'years_experience']);
+
+    $this->actingAs($this->recruiter)
+        ->putJson("/api/jobs/{$this->job->id}/fields", fieldPayload([
+            validField(['key' => 'other_field']),
+        ]))
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['fields']);
+
+    $this->assertDatabaseHas('application_fields', ['job_id' => $this->job->id, 'key' => 'years_experience']);
+});
+
+test('put allows the replacement when referenced keys are kept', function () {
+    ApplicationField::factory()->for($this->job)->create(['key' => 'years_experience']);
+    ScreeningCriterion::factory()->for($this->job)->create(['field_key' => 'years_experience']);
+
+    $this->actingAs($this->recruiter)
+        ->putJson("/api/jobs/{$this->job->id}/fields", fieldPayload([validField()]))
+        ->assertOk();
 });
 
 test('managing fields requires authentication', function () {

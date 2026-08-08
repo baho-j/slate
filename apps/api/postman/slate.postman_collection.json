@@ -628,6 +628,141 @@
       ]
     },
     {
+      "name": "Screening criteria",
+      "item": [
+        {
+          "name": "PUT /api/jobs/:job/criteria",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}/criteria",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "jobs",
+                "{{jobId}}",
+                "criteria"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"criteria\": [{\"field_key\": \"years_experience\", \"operator\": \"gte\", \"value\": 3, \"mode\": \"knockout\"}, {\"field_key\": \"skills\", \"operator\": \"includes_all\", \"value\": [\"php\", \"react\"], \"mode\": \"scored\", \"weight\": 30}]}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "const criteriaData = pm.response.json().data",
+                  "pm.test('replaced with two rules', () => {",
+                  "  pm.expect(criteriaData).to.have.lengthOf(2)",
+                  "  pm.expect(criteriaData[0].mode).to.eql('knockout')",
+                  "  pm.expect(criteriaData[1].weight).to.eql(30)",
+                  "})"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /api/jobs/:job/criteria (validation)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}/criteria",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "jobs",
+                "{{jobId}}",
+                "criteria"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"criteria\": [{\"field_key\": \"years_experience\", \"operator\": \"includes_all\", \"value\": [\"x\"], \"mode\": \"knockout\"}]}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422', () => pm.response.to.have.status(422))",
+                  "pm.test('rejects an incompatible operator', () => pm.expect(pm.response.json().errors).to.have.property('criteria.0.operator'))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/jobs/:job/criteria",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}/criteria",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "jobs",
+                "{{jobId}}",
+                "criteria"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "const criteriaKeys = pm.response.json().data.map(c => c.field_key)",
+                  "pm.test('returns the replaced rules', () => pm.expect(criteriaKeys).to.eql(['years_experience','skills']))"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Public careers",
       "item": [
         {

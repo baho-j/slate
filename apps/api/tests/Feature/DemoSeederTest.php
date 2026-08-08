@@ -3,6 +3,7 @@
 use App\Enums\UserRole;
 use App\Models\Job;
 use App\Models\Organization;
+use App\Models\ScreeningCriterion;
 use App\Models\User;
 use Database\Seeders\DemoSeeder;
 
@@ -63,12 +64,25 @@ test('it seeds two jobs carrying populated typed fields', function () {
         ->toBe(['years_experience', 'has_work_permit', 'skills', 'degree']);
 });
 
+test('it seeds screening criteria on the jobs that have fields', function () {
+    $admin = User::where('email', 'admin@slate.test')->first();
+    $this->actingAs($admin);
+
+    $job = Job::has('screeningCriteria')->first();
+
+    expect($job)->not->toBeNull()
+        ->and($job->screeningCriteria->pluck('field_key')->all())
+        ->toBe(['years_experience', 'has_work_permit', 'skills', 'degree']);
+});
+
 test('seeding is idempotent', function () {
     $before = User::count();
     $beforeJobs = Job::withoutGlobalScopes()->count();
+    $beforeCriteria = ScreeningCriterion::count();
 
     $this->seed(DemoSeeder::class);
 
     expect(User::count())->toBe($before)
-        ->and(Job::withoutGlobalScopes()->count())->toBe($beforeJobs);
+        ->and(Job::withoutGlobalScopes()->count())->toBe($beforeJobs)
+        ->and(ScreeningCriterion::count())->toBe($beforeCriteria);
 });

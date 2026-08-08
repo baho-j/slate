@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Fields;
 
 use App\Enums\FieldType;
+use App\Models\Job;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -47,7 +48,27 @@ class ReplaceApplicationFieldsRequest extends FormRequest
                     $validator->errors()->add("fields.{$index}.options", 'Options are only allowed on select fields.');
                 }
             }
+
+            $this->guardAgainstOrphanedCriteria($validator);
         });
+    }
+
+    private function guardAgainstOrphanedCriteria(mixed $validator): void
+    {
+        /** @var Job $job */
+        $job = $this->route('job');
+
+        $incomingKeys = array_column($this->input('fields', []), 'key');
+        $referenced = $job->screeningCriteria()->pluck('field_key')->unique();
+
+        $orphaned = $referenced->diff($incomingKeys);
+
+        if ($orphaned->isNotEmpty()) {
+            $validator->errors()->add(
+                'fields',
+                'Cannot remove fields referenced by screening criteria: '.$orphaned->implode(', ').'.'
+            );
+        }
     }
 
     /**

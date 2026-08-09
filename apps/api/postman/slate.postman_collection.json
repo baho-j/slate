@@ -875,7 +875,15 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('200', () => pm.response.to.have.status(200))",
-                  "pm.test('hides internal fields', () => pm.expect(pm.response.json().data).to.not.have.property('status'))"
+                  "const job = pm.response.json().data",
+                  "pm.test('hides internal fields', () => pm.expect(job).to.not.have.property('status'))",
+                  "pm.test('returns the application fields in order', () => {",
+                  "    pm.expect(job.fields.map(f => f.key)).to.eql(['years_experience', 'skills'])",
+                  "})",
+                  "pm.test('returns criteria without weights', () => {",
+                  "    pm.expect(job.criteria).to.have.lengthOf(2)",
+                  "    pm.expect(job.criteria[0]).to.not.have.property('weight')",
+                  "})"
                 ]
               }
             }
@@ -990,7 +998,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\"full_name\":\"Casey Contract\",\"email\":\"casey.contract@example.com\",\"cover_note\":\"Contract QA is my thing.\",\"cv_key\":\"{{cvKey}}\",\"cv_original_name\":\"cv.pdf\"}"
+              "raw": "{\"full_name\": \"Casey Contract\", \"email\": \"casey.contract@example.com\", \"cover_note\": \"Contract QA is my thing.\", \"cv_key\": \"{{cvKey}}\", \"cv_original_name\": \"cv.pdf\", \"answers\": {\"years_experience\": 6, \"skills\": [\"php\", \"react\"]}}"
             }
           },
           "event": [
@@ -1001,6 +1009,56 @@
                 "exec": [
                   "pm.test('201', () => pm.response.to.have.status(201))",
                   "pm.test('confirms submission', () => pm.expect(pm.response.json().message).to.be.a('string'))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST apply (answer validation)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\"full_name\": \"Wrong Answers\", \"email\": \"wrong.answers@example.com\", \"cv_key\": \"{{cvKey}}\", \"cv_original_name\": \"cv.pdf\", \"answers\": {\"skills\": [\"cobol\"], \"not_a_field\": 1}}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/public/o/{{orgSlug}}/jobs/{{jobId}}/apply",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "public",
+                "o",
+                "{{orgSlug}}",
+                "jobs",
+                "{{jobId}}",
+                "apply"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422 on invalid answers', () => pm.response.to.have.status(422))",
+                  "const errors = pm.response.json().errors",
+                  "pm.test('requires the required field', () => pm.expect(errors).to.have.property('answers.years_experience'))",
+                  "pm.test('rejects an option outside the field options', () => pm.expect(errors).to.have.property('answers.skills.0'))",
+                  "pm.test('rejects an unknown field key', () => pm.expect(errors).to.have.property('answers.not_a_field'))"
                 ]
               }
             }
@@ -1037,7 +1095,7 @@
             },
             "body": {
               "mode": "raw",
-              "raw": "{\"full_name\":\"Casey Contract\",\"email\":\"casey.contract@example.com\",\"cover_note\":\"Again.\",\"cv_key\":\"{{cvKey}}\",\"cv_original_name\":\"cv.pdf\"}"
+              "raw": "{\"full_name\": \"Casey Contract\", \"email\": \"casey.contract@example.com\", \"cover_note\": \"Again.\", \"cv_key\": \"{{cvKey}}\", \"cv_original_name\": \"cv.pdf\", \"answers\": {\"years_experience\": 6, \"skills\": [\"php\", \"react\"]}}"
             }
           },
           "event": [

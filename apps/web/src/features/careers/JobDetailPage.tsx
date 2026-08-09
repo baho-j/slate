@@ -80,7 +80,7 @@ export function JobDetailPage({ orgSlug, jobId }: { orgSlug: string; jobId: stri
 
         <hr className="border-n-200" />
 
-        <ApplyForm orgSlug={orgSlug} jobId={jobId} />
+        <ApplyForm orgSlug={orgSlug} jobId={jobId} fields={job.fields} criteria={job.criteria} />
       </article>
     </CareersShell>
   )

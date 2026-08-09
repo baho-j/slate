@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\ApplicationStatus;
+use App\Enums\Eligibility;
 use App\Models\Concerns\HasOrganization;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -28,6 +29,7 @@ class Application extends Model
     {
         return [
             'status' => ApplicationStatus::class,
+            'eligibility' => Eligibility::class,
             'match_score' => 'integer',
         ];
     }
@@ -48,6 +50,12 @@ class Application extends Model
     public function currentStage(): BelongsTo
     {
         return $this->belongsTo(PipelineStage::class, 'current_stage_id');
+    }
+
+    /** @return HasMany<ApplicationAnswer, $this> */
+    public function answers(): HasMany
+    {
+        return $this->hasMany(ApplicationAnswer::class);
     }
 
     /** @return HasMany<ApplicationDocument, $this> */

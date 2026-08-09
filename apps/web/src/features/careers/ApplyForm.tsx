@@ -1,24 +1,35 @@
-import { type FormEvent, type ReactNode, useId, useState } from 'react'
+import { type FormEvent, type ReactNode, useId, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { answersSchema } from './answers-schema'
 import { type ApplyFormValues, applyFormSchema } from './apply-schema'
+import { previewRequirements } from './criteria-preview'
+import { DynamicField } from './DynamicField'
 import { useApplyToJob } from './hooks'
+import { RequirementsPreview } from './RequirementsPreview'
+import type { AnswerValue, ApplicationFieldDefinition, PublicCriterion } from './types'
 
 type FieldErrors = Partial<Record<keyof ApplyFormValues, string>>
 
 interface ApplyFormProps {
   orgSlug: string
   jobId: string
+  fields?: ApplicationFieldDefinition[]
+  criteria?: PublicCriterion[]
 }
 
-export function ApplyForm({ orgSlug, jobId }: ApplyFormProps) {
+export function ApplyForm({ orgSlug, jobId, fields = [], criteria = [] }: ApplyFormProps) {
   const fieldId = useId()
   const apply = useApplyToJob(orgSlug, jobId)
   const [fullName, setFullName] = useState('')
   const [email, setEmail] = useState('')
   const [coverNote, setCoverNote] = useState('')
   const [cv, setCv] = useState<File | null>(null)
+  const [answers, setAnswers] = useState<Record<string, AnswerValue>>({})
   const [errors, setErrors] = useState<FieldErrors>({})
+  const [answerErrors, setAnswerErrors] = useState<Record<string, string>>({})
+
+  const requirements = useMemo(() => previewRequirements(criteria, answers), [criteria, answers])
 
   if (apply.isSuccess) {
     return (
@@ -44,22 +55,29 @@ export function ApplyForm({ orgSlug, jobId }: ApplyFormProps) {
       cv: cv ?? undefined,
     })
 
-    if (!result.success) {
+    const answerIssues = answersSchema(fields, answers)
+
+    if (!result.success || Object.keys(answerIssues).length > 0) {
       const next: FieldErrors = {}
-      for (const issue of result.error.issues) {
-        const key = issue.path[0] as keyof ApplyFormValues
-        next[key] ??= issue.message
+      if (!result.success) {
+        for (const issue of result.error.issues) {
+          const key = issue.path[0] as keyof ApplyFormValues
+          next[key] ??= issue.message
+        }
       }
       setErrors(next)
+      setAnswerErrors(answerIssues)
       return
     }
 
     setErrors({})
+    setAnswerErrors({})
     apply.mutate({
       full_name: result.data.full_name,
       email: result.data.email,
       cover_note: result.data.cover_note,
       cv: result.data.cv,
+      answers,
     })
   }
 
@@ -97,6 +115,24 @@ export function ApplyForm({ orgSlug, jobId }: ApplyFormProps) {
           onChange={(event) => setCv(event.target.files?.[0] ?? null)}
         />
       </Field>
+
+      {fields.map((field) => (
+        <Field
+          key={field.key}
+          id={`${fieldId}-${field.key}`}
+          label={field.required ? field.label : `${field.label} (optional)`}
+          error={answerErrors[field.key]}
+        >
+          <DynamicField
+            field={field}
+            id={`${fieldId}-${field.key}`}
+            value={answers[field.key] ?? null}
+            onChange={(value) => setAnswers((current) => ({ ...current, [field.key]: value }))}
+          />
+        </Field>
+      ))}
+
+      <RequirementsPreview requirements={requirements} fields={fields} />
 
       <Field id={`${fieldId}-note`} label="Cover note (optional)" error={errors.cover_note}>
         <textarea

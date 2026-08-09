@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\EmploymentType;
+use App\Enums\IneligibleHandling;
 use App\Enums\JobStatus;
 use App\Models\Concerns\HasOrganization;
 use Database\Factories\JobFactory;
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\Auth;
 
 #[Fillable([
     'title', 'description', 'department', 'location', 'employment_type',
-    'salary_min', 'salary_max', 'currency', 'status', 'closing_date',
+    'salary_min', 'salary_max', 'currency', 'status', 'closing_date', 'on_ineligible',
 ])]
 class Job extends Model
 {
@@ -30,6 +31,7 @@ class Job extends Model
      */
     protected $attributes = [
         'status' => JobStatus::Draft->value,
+        'on_ineligible' => IneligibleHandling::Flag->value,
     ];
 
     protected static function booted(): void
@@ -44,6 +46,7 @@ class Job extends Model
         return [
             'employment_type' => EmploymentType::class,
             'status' => JobStatus::class,
+            'on_ineligible' => IneligibleHandling::class,
             'closing_date' => 'date',
             'salary_min' => 'integer',
             'salary_max' => 'integer',

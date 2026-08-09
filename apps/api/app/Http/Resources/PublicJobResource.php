@@ -28,6 +28,8 @@ class PublicJobResource extends JsonResource
             'currency' => $this->currency,
             'closing_date' => $this->closing_date?->toDateString(),
             'published_at' => $this->updated_at?->toIso8601String(),
+            'fields' => ApplicationFieldResource::collection($this->whenLoaded('applicationFields')),
+            'criteria' => PublicScreeningCriterionResource::collection($this->whenLoaded('screeningCriteria')),
         ];
     }
 }

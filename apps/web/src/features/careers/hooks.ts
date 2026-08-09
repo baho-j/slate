@@ -7,7 +7,13 @@ import {
   submitApplication,
   uploadCv,
 } from './api'
-import type { Paginated, PublicJob, PublicJobListParams, PublicOrganization } from './types'
+import type {
+  AnswerValue,
+  Paginated,
+  PublicJob,
+  PublicJobListParams,
+  PublicOrganization,
+} from './types'
 
 function retryPublic(failureCount: number, error: AxiosError): boolean {
   const status = error.response?.status
@@ -55,6 +61,7 @@ interface ApplyVariables {
   email: string
   cover_note: string | null
   cv: File
+  answers: Record<string, AnswerValue>
 }
 
 export function useApplyToJob(slug: string, jobId: string) {

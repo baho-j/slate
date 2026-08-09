@@ -39,7 +39,9 @@ class PublicCareersController extends Controller
 
     public function job(Organization $organization, string $job): PublicJobResource
     {
-        $found = $this->publishedJobs($organization)->findOrFail($job);
+        $found = $this->publishedJobs($organization)
+            ->with(['applicationFields', 'screeningCriteria'])
+            ->findOrFail($job);
 
         return PublicJobResource::make($found);
     }

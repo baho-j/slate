@@ -19,6 +19,7 @@ import { Route as AppJobsRouteImport } from './routes/_app.jobs'
 import { Route as AppSettingsRouteImport } from './routes/_app.settings'
 import { Route as AppJobsIndexRouteImport } from './routes/_app.jobs.index'
 import { Route as OOrgSlugIndexRouteImport } from './routes/o.$orgSlug.index'
+import { Route as AppJobsJobIdFormRouteImport } from './routes/_app.jobs.$jobId.form'
 import { Route as OOrgSlugJobsJobIdRouteImport } from './routes/o.$orgSlug.jobs.$jobId'
 import { Route as AppJobsJobIdApplicationsIndexRouteImport } from './routes/_app.jobs.$jobId.applications.index'
 import { Route as AppJobsJobIdApplicationsApplicationIdRouteImport } from './routes/_app.jobs.$jobId.applications.$applicationId'
@@ -72,6 +73,11 @@ const OOrgSlugIndexRoute = OOrgSlugIndexRouteImport.update({
   path: '/o/$orgSlug/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppJobsJobIdFormRoute = AppJobsJobIdFormRouteImport.update({
+  id: '/$jobId/form',
+  path: '/$jobId/form',
+  getParentRoute: () => AppJobsRoute,
+} as any)
 const OOrgSlugJobsJobIdRoute = OOrgSlugJobsJobIdRouteImport.update({
   id: '/o/$orgSlug/jobs/$jobId',
   path: '/o/$orgSlug/jobs/$jobId',
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AppSettingsRoute
   '/jobs/': typeof AppJobsIndexRoute
   '/o/$orgSlug/': typeof OOrgSlugIndexRoute
+  '/jobs/$jobId/form': typeof AppJobsJobIdFormRoute
   '/o/$orgSlug/jobs/$jobId': typeof OOrgSlugJobsJobIdRoute
   '/jobs/$jobId/applications/$applicationId': typeof AppJobsJobIdApplicationsApplicationIdRoute
   '/jobs/$jobId/applications/': typeof AppJobsJobIdApplicationsIndexRoute
@@ -113,6 +120,7 @@ export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
   '/jobs': typeof AppJobsIndexRoute
   '/o/$orgSlug': typeof OOrgSlugIndexRoute
+  '/jobs/$jobId/form': typeof AppJobsJobIdFormRoute
   '/o/$orgSlug/jobs/$jobId': typeof OOrgSlugJobsJobIdRoute
   '/jobs/$jobId/applications/$applicationId': typeof AppJobsJobIdApplicationsApplicationIdRoute
   '/jobs/$jobId/applications': typeof AppJobsJobIdApplicationsIndexRoute
@@ -129,6 +137,7 @@ export interface FileRoutesById {
   '/_app/': typeof AppIndexRoute
   '/_app/jobs/': typeof AppJobsIndexRoute
   '/o/$orgSlug/': typeof OOrgSlugIndexRoute
+  '/_app/jobs/$jobId/form': typeof AppJobsJobIdFormRoute
   '/o/$orgSlug/jobs/$jobId': typeof OOrgSlugJobsJobIdRoute
   '/_app/jobs/$jobId/applications/$applicationId': typeof AppJobsJobIdApplicationsApplicationIdRoute
   '/_app/jobs/$jobId/applications/': typeof AppJobsJobIdApplicationsIndexRoute
@@ -145,6 +154,7 @@ export interface FileRouteTypes {
     | '/settings'
     | '/jobs/'
     | '/o/$orgSlug/'
+    | '/jobs/$jobId/form'
     | '/o/$orgSlug/jobs/$jobId'
     | '/jobs/$jobId/applications/$applicationId'
     | '/jobs/$jobId/applications/'
@@ -158,6 +168,7 @@ export interface FileRouteTypes {
     | '/'
     | '/jobs'
     | '/o/$orgSlug'
+    | '/jobs/$jobId/form'
     | '/o/$orgSlug/jobs/$jobId'
     | '/jobs/$jobId/applications/$applicationId'
     | '/jobs/$jobId/applications'
@@ -173,6 +184,7 @@ export interface FileRouteTypes {
     | '/_app/'
     | '/_app/jobs/'
     | '/o/$orgSlug/'
+    | '/_app/jobs/$jobId/form'
     | '/o/$orgSlug/jobs/$jobId'
     | '/_app/jobs/$jobId/applications/$applicationId'
     | '/_app/jobs/$jobId/applications/'
@@ -257,6 +269,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OOrgSlugIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/jobs/$jobId/form': {
+      id: '/_app/jobs/$jobId/form'
+      path: '/$jobId/form'
+      fullPath: '/jobs/$jobId/form'
+      preLoaderRoute: typeof AppJobsJobIdFormRouteImport
+      parentRoute: typeof AppJobsRoute
+    }
     '/o/$orgSlug/jobs/$jobId': {
       id: '/o/$orgSlug/jobs/$jobId'
       path: '/o/$orgSlug/jobs/$jobId'
@@ -283,12 +302,14 @@ declare module '@tanstack/react-router' {
 
 interface AppJobsRouteChildren {
   AppJobsIndexRoute: typeof AppJobsIndexRoute
+  AppJobsJobIdFormRoute: typeof AppJobsJobIdFormRoute
   AppJobsJobIdApplicationsApplicationIdRoute: typeof AppJobsJobIdApplicationsApplicationIdRoute
   AppJobsJobIdApplicationsIndexRoute: typeof AppJobsJobIdApplicationsIndexRoute
 }
 
 const AppJobsRouteChildren: AppJobsRouteChildren = {
   AppJobsIndexRoute: AppJobsIndexRoute,
+  AppJobsJobIdFormRoute: AppJobsJobIdFormRoute,
   AppJobsJobIdApplicationsApplicationIdRoute:
     AppJobsJobIdApplicationsApplicationIdRoute,
   AppJobsJobIdApplicationsIndexRoute: AppJobsJobIdApplicationsIndexRoute,

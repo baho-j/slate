@@ -48,6 +48,11 @@ export function JobRowActions({ job, onEdit }: JobRowActionsProps) {
             View applications
           </Link>
         </DropdownMenuItem>
+        <DropdownMenuItem asChild>
+          <Link to="/jobs/$jobId/form" params={{ jobId: job.id }}>
+            Application form
+          </Link>
+        </DropdownMenuItem>
         <DropdownMenuItem onSelect={() => onEdit(job)}>Edit</DropdownMenuItem>
         {job.status === 'draft' && (
           <DropdownMenuItem onSelect={handlePublish}>Publish</DropdownMenuItem>

@@ -2,12 +2,12 @@
 
 namespace App\Actions;
 
-use App\Models\Organization;
+use App\Models\Job;
 use App\Models\Pipeline;
 
 class EnsureDefaultPipeline
 {
-    private const STAGES = [
+    public const STAGES = [
         ['name' => 'Applied', 'order' => 1, 'is_terminal' => false],
         ['name' => 'In Review', 'order' => 2, 'is_terminal' => false],
         ['name' => 'Interview', 'order' => 3, 'is_terminal' => false],
@@ -16,15 +16,16 @@ class EnsureDefaultPipeline
         ['name' => 'Rejected', 'order' => 6, 'is_terminal' => true],
     ];
 
-    public function forOrganization(Organization $organization): Pipeline
+    public function forJob(Job $job): Pipeline
     {
         $pipeline = Pipeline::withoutGlobalScopes()
-            ->where('organization_id', $organization->id)
+            ->where('job_id', $job->id)
             ->first();
 
         if ($pipeline === null) {
             $pipeline = new Pipeline(['name' => 'Default']);
-            $pipeline->organization_id = $organization->id;
+            $pipeline->job_id = $job->id;
+            $pipeline->organization_id = $job->organization_id;
             $pipeline->save();
         }
 

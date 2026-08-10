@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Policies\PipelinePolicy;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -27,5 +29,7 @@ class AppServiceProvider extends ServiceProvider
             ->by(Str::lower((string) $request->input('email')).'|'.$request->ip()));
 
         RateLimiter::for('public', fn (Request $request) => Limit::perMinute(60)->by($request->ip()));
+
+        Gate::define('configurePipeline', [PipelinePolicy::class, 'configure']);
     }
 }

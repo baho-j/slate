@@ -61,7 +61,7 @@ class ApplicationDetailResource extends JsonResource
     private function availableStages(): array
     {
         return Pipeline::query()
-            ->where('organization_id', $this->organization_id)
+            ->where('job_id', $this->job_id)
             ->with('stages')
             ->first()
             ?->stages

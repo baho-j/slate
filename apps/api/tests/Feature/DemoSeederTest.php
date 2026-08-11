@@ -86,3 +86,41 @@ test('seeding is idempotent', function () {
         ->and(Job::withoutGlobalScopes()->count())->toBe($beforeJobs)
         ->and(ScreeningCriterion::count())->toBe($beforeCriteria);
 });
+
+test('it seeds applications spread across the open stages of a job', function () {
+    $admin = User::where('email', 'admin@slate.test')->first();
+    $this->actingAs($admin);
+
+    $job = Job::has('applications')->first();
+
+    expect($job)->not->toBeNull();
+
+    $byStage = $job->applications()->get()->groupBy('current_stage_id');
+
+    expect($byStage->count())->toBeGreaterThan(1);
+    expect($job->applications()->count())->toBeGreaterThanOrEqual(10);
+});
+
+test('seeded applications carry answers and a real screening verdict', function () {
+    $admin = User::where('email', 'admin@slate.test')->first();
+    $this->actingAs($admin);
+
+    $application = Job::has('applications')->first()->applications()->first();
+
+    expect($application->answers()->count())->toBe(4)
+        ->and($application->statusHistory()->count())->toBe(1);
+
+    $verdicts = Job::has('applications')->first()->applications()->pluck('eligibility')->unique();
+
+    expect($verdicts->count())->toBeGreaterThan(1);
+});
+
+test('seeded candidates are distinct people', function () {
+    $admin = User::where('email', 'admin@slate.test')->first();
+    $this->actingAs($admin);
+
+    $applications = Job::has('applications')->first()->applications()->with('candidate')->get();
+    $names = $applications->pluck('candidate.full_name');
+
+    expect($names->unique()->count())->toBe($names->count());
+});

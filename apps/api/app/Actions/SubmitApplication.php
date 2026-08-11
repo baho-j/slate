@@ -35,7 +35,7 @@ class SubmitApplication
             throw ValidationException::withMessages(['cv_key' => $verification->error]);
         }
 
-        $firstStage = $this->pipelines->forOrganization($job->organization)->stages()->first();
+        $firstStage = $this->pipelines->forJob($job)->stages()->first();
         $fields = $job->applicationFields()->get();
         $answers = $this->answersForFields($fields, $data['answers'] ?? []);
         $evaluation = $this->evaluator->evaluate($this->rulesFor($job), $answers);

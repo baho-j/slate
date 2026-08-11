@@ -6,6 +6,7 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CvUploadController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\JobController;
+use App\Http\Controllers\PipelineController;
 use App\Http\Controllers\PublicApplicationController;
 use App\Http\Controllers\PublicCareersController;
 use App\Http\Controllers\ScreeningCriterionController;
@@ -40,6 +41,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/jobs/{job}/fields', [ApplicationFieldController::class, 'replace']);
     Route::get('/jobs/{job}/criteria', [ScreeningCriterionController::class, 'index']);
     Route::put('/jobs/{job}/criteria', [ScreeningCriterionController::class, 'replace']);
+    Route::get('/jobs/{job}/pipeline', [PipelineController::class, 'show']);
+    Route::put('/jobs/{job}/pipeline', [PipelineController::class, 'update']);
     Route::apiResource('jobs', JobController::class);
 
     Route::get('/jobs/{job}/applications', [ApplicationController::class, 'index']);

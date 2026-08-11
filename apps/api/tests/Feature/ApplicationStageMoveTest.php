@@ -14,7 +14,7 @@ beforeEach(function () {
     $this->recruiter = User::factory()->for($this->acme)->role(UserRole::Recruiter)->create();
     $this->job = Job::factory()->for($this->acme)->published()->create();
 
-    $pipeline = app(EnsureDefaultPipeline::class)->forOrganization($this->acme);
+    $pipeline = app(EnsureDefaultPipeline::class)->forJob($this->job);
     $this->stages = $pipeline->stages()->orderBy('order')->get();
     $this->firstStage = $this->stages->first();
     $this->nextStage = $this->stages->get(1);
@@ -76,9 +76,9 @@ test('moving an application from another org returns 404', function () {
         ->assertNotFound();
 });
 
-test('the target stage must belong to the org pipeline', function () {
-    $foreignPipeline = app(EnsureDefaultPipeline::class)->forOrganization($this->globex);
-    $foreignStage = $foreignPipeline->stages()->first();
+test('the target stage must belong to this job pipeline', function () {
+    $otherJob = Job::factory()->for($this->acme)->published()->create();
+    $foreignStage = app(EnsureDefaultPipeline::class)->forJob($otherJob)->stages()->first();
     $application = applicationOn($this->job, $this->firstStage->id);
 
     $this->actingAs($this->recruiter)

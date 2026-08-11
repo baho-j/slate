@@ -24,6 +24,38 @@
     {
       "key": "orgSlug",
       "value": "acme"
+    },
+    {
+      "key": "stageAppliedId",
+      "value": ""
+    },
+    {
+      "key": "stageReviewId",
+      "value": ""
+    },
+    {
+      "key": "stageInterviewId",
+      "value": ""
+    },
+    {
+      "key": "stageHiredId",
+      "value": ""
+    },
+    {
+      "key": "stageRejectedId",
+      "value": ""
+    },
+    {
+      "key": "addedStageId",
+      "value": ""
+    },
+    {
+      "key": "occupiedStageId",
+      "value": ""
+    },
+    {
+      "key": "occupiedStageName",
+      "value": ""
     }
   ],
   "item": [
@@ -1239,6 +1271,244 @@
                   "const app = pm.response.json().data",
                   "pm.test('moved to the new stage', () => pm.expect(app.current_stage.id).to.eql(pm.collectionVariables.get('nextStageId')))",
                   "pm.test('logged a history row', () => pm.expect(app.status_history.length).to.be.above(1))"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Pipeline",
+      "item": [
+        {
+          "name": "GET /api/jobs/:job/pipeline",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}/pipeline",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "jobs",
+                "{{jobId}}",
+                "pipeline"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "const pipeline = pm.response.json().data",
+                  "pm.test('a job starts with the default stages', () => pm.expect(pipeline.stages.map(s => s.name))",
+                  "    .to.eql(['Applied','In Review','Interview','Offer','Hired','Rejected']))",
+                  "pm.test('stages are numbered from one', () => pm.expect(pipeline.stages.map(s => s.order))",
+                  "    .to.eql([1,2,3,4,5,6]))",
+                  "pm.test('end states are flagged', () => pm.expect(pipeline.stages.filter(s => s.is_terminal).map(s => s.name))",
+                  "    .to.eql(['Hired','Rejected']))",
+                  "pm.collectionVariables.set('stageAppliedId', pipeline.stages[0].id)",
+                  "pm.collectionVariables.set('stageReviewId', pipeline.stages[1].id)",
+                  "pm.collectionVariables.set('stageInterviewId', pipeline.stages[2].id)",
+                  "pm.collectionVariables.set('stageHiredId', pipeline.stages[4].id)",
+                  "pm.collectionVariables.set('stageRejectedId', pipeline.stages[5].id)",
+                  "const occupied = pipeline.stages.find(s => s.application_count > 0)",
+                  "pm.test('the counts show where applications are sitting', () => pm.expect(occupied, 'a stage holds applications').to.be.an('object'))",
+                  "pm.collectionVariables.set('occupiedStageId', occupied.id)",
+                  "pm.collectionVariables.set('occupiedStageName', occupied.name)"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /api/jobs/:job/pipeline",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stages\": [\n    {\n      \"id\": \"{{stageAppliedId}}\",\n      \"name\": \"Applied\",\n      \"is_terminal\": false\n    },\n    {\n      \"id\": \"{{stageInterviewId}}\",\n      \"name\": \"Interview\",\n      \"is_terminal\": false\n    },\n    {\n      \"id\": \"{{stageReviewId}}\",\n      \"name\": \"In Review\",\n      \"is_terminal\": false\n    },\n    {\n      \"id\": null,\n      \"name\": \"Reference Check\",\n      \"is_terminal\": false\n    },\n    {\n      \"id\": \"{{stageHiredId}}\",\n      \"name\": \"Hired\",\n      \"is_terminal\": true\n    },\n    {\n      \"id\": \"{{stageRejectedId}}\",\n      \"name\": \"Rejected\",\n      \"is_terminal\": true\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}/pipeline",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "jobs",
+                "{{jobId}}",
+                "pipeline"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "const stages = pm.response.json().data.stages",
+                  "pm.test('the new order is applied', () => pm.expect(stages.map(s => s.name))",
+                  "    .to.eql(['Applied','Interview','In Review','Reference Check','Hired','Rejected']))",
+                  "pm.test('order is renumbered contiguously', () => pm.expect(stages.map(s => s.order)).to.eql([1,2,3,4,5,6]))",
+                  "pm.test('reordering keeps the original stage ids', () => {",
+                  "    pm.expect(stages[0].id).to.eql(Number(pm.collectionVariables.get('stageAppliedId')))",
+                  "    pm.expect(stages[1].id).to.eql(Number(pm.collectionVariables.get('stageInterviewId')))",
+                  "})",
+                  "pm.test('the added stage got an id', () => pm.expect(stages[3].id).to.be.a('number'))",
+                  "pm.collectionVariables.set('addedStageId', stages[3].id)"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /api/jobs/:job/pipeline (stage in use)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stages\": [\n    {\n      \"id\": null,\n      \"name\": \"Only Stage\",\n      \"is_terminal\": false\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}/pipeline",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "jobs",
+                "{{jobId}}",
+                "pipeline"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('409', () => pm.response.to.have.status(409))",
+                  "pm.test('names the blocking stage', () => pm.expect(pm.response.json().message)",
+                  "    .to.include(pm.collectionVariables.get('occupiedStageName')))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/jobs/:job/pipeline (after 409)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}/pipeline",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "jobs",
+                "{{jobId}}",
+                "pipeline"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "const names = pm.response.json().data.stages.map(s => s.name)",
+                  "pm.test('the rejected delete changed nothing', () => pm.expect(names)",
+                  "    .to.eql(['Applied','Interview','In Review','Reference Check','Hired','Rejected']))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PUT /api/jobs/:job/pipeline (validation)",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"stages\": [\n    {\n      \"id\": null,\n      \"name\": \"Hired\",\n      \"is_terminal\": true\n    },\n    {\n      \"id\": null,\n      \"name\": \"Hired\",\n      \"is_terminal\": true\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}/pipeline",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "jobs",
+                "{{jobId}}",
+                "pipeline"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422', () => pm.response.to.have.status(422))",
+                  "const errors = pm.response.json().errors",
+                  "pm.test('duplicate stage names are rejected', () => pm.expect(errors).to.have.property('stages.0.name'))",
+                  "pm.test('an all-terminal pipeline is rejected', () => pm.expect(errors).to.have.property('stages'))"
                 ]
               }
             }

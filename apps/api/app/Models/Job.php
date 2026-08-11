@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Facades\Auth;
 
 #[Fillable([
@@ -75,5 +76,11 @@ class Job extends Model
     public function screeningCriteria(): HasMany
     {
         return $this->hasMany(ScreeningCriterion::class);
+    }
+
+    /** @return HasOne<Pipeline, $this> */
+    public function pipeline(): HasOne
+    {
+        return $this->hasOne(Pipeline::class);
     }
 }

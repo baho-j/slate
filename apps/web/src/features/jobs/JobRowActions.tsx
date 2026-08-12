@@ -49,6 +49,11 @@ export function JobRowActions({ job, onEdit }: JobRowActionsProps) {
           </Link>
         </DropdownMenuItem>
         <DropdownMenuItem asChild>
+          <Link to="/jobs/$jobId/board" params={{ jobId: job.id }}>
+            Pipeline board
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem asChild>
           <Link to="/jobs/$jobId/form" params={{ jobId: job.id }}>
             Application form
           </Link>

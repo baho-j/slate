@@ -3,15 +3,21 @@
 namespace Database\Seeders;
 
 use App\Actions\EnsureDefaultPipeline;
+use App\Enums\ApplicationStatus;
 use App\Enums\CriterionMode;
 use App\Enums\CriterionOperator;
 use App\Enums\FieldType;
 use App\Enums\JobStatus;
 use App\Enums\UserRole;
+use App\Models\Candidate;
 use App\Models\Job;
 use App\Models\Organization;
+use App\Models\PipelineStage;
+use App\Models\ScreeningCriterion;
 use App\Models\User;
+use App\Services\Criteria\CriteriaEvaluator;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Hash;
 
 class DemoSeeder extends Seeder
@@ -91,10 +97,97 @@ class DemoSeeder extends Seeder
             );
         }
 
-        app(EnsureDefaultPipeline::class)->forJob($job);
+        $pipeline = app(EnsureDefaultPipeline::class)->forJob($job);
+
+        $this->applications($job, $pipeline->stages()->get());
 
         return $job;
     }
+
+    /**
+     * @param  Collection<int, PipelineStage>  $stages
+     */
+    private function applications(Job $job, Collection $stages): void
+    {
+        if ($stages->isEmpty() || $job->applications()->withoutGlobalScopes()->exists()) {
+            return;
+        }
+
+        $evaluator = app(CriteriaEvaluator::class);
+        $rules = $job->screeningCriteria()->get()
+            ->map(fn (ScreeningCriterion $rule) => [
+                'field_key' => $rule->field_key,
+                'operator' => $rule->operator,
+                'value' => $rule->value,
+                'mode' => $rule->mode,
+                'weight' => $rule->weight,
+            ])
+            ->all();
+
+        $fields = $job->applicationFields()->get()->keyBy('key');
+        $open = $stages->where('is_terminal', false)->values();
+
+        foreach ($this->demoApplicants() as $index => $applicant) {
+            $candidate = Candidate::firstOrCreate(
+                ['email' => $applicant['email']],
+                ['full_name' => $applicant['full_name']],
+            );
+
+            $evaluation = $evaluator->evaluate($rules, $applicant['answers']);
+            $stage = $open->get($index % max($open->count(), 1)) ?? $stages->first();
+
+            $application = $job->applications()->make([
+                'candidate_id' => $candidate->id,
+                'current_stage_id' => $stage->id,
+                'eligibility' => $evaluation->eligibility,
+                'match_score' => $evaluation->matchScore,
+                'status' => ApplicationStatus::Applied,
+            ]);
+            $application->organization_id = $job->organization_id;
+            $application->save();
+
+            foreach ($applicant['answers'] as $key => $value) {
+                $application->answers()->create([
+                    'field_id' => $fields->get($key)?->id,
+                    'field_key' => $key,
+                    'value' => $value,
+                ]);
+            }
+
+            $application->statusHistory()->create([
+                'to_stage_id' => $stage->id,
+                'to_status' => ApplicationStatus::Applied->value,
+                'note' => 'Application submitted.',
+            ]);
+        }
+    }
+
+    /**
+     * @return array<int, array{full_name: string, email: string, answers: array<string, mixed>}>
+     */
+    private function demoApplicants(): array
+    {
+        $skills = [['php', 'react'], ['php'], ['react', 'go'], ['php', 'react', 'sql'], ['python']];
+        $degrees = ['bsc', 'msc', 'phd', 'none'];
+
+        return collect(range(1, 16))
+            ->map(fn (int $n) => [
+                'full_name' => self::NAMES[($n - 1) % count(self::NAMES)].' '
+                    .self::SURNAMES[intdiv($n - 1, count(self::NAMES)) % count(self::SURNAMES)],
+                'email' => 'candidate'.$n.'@example.test',
+                'answers' => [
+                    'years_experience' => 1 + ($n % 9),
+                    'has_work_permit' => $n % 5 !== 0,
+                    'skills' => $skills[($n - 1) % count($skills)],
+                    'degree' => $degrees[($n - 1) % count($degrees)],
+                ],
+            ])
+            ->all();
+    }
+
+    private const NAMES = ['Amara', 'Bram', 'Chidi', 'Dalia', 'Eero', 'Freya', 'Goran', 'Hina'];
+
+    private const SURNAMES = ['Okafor', 'Lindqvist', 'Mensah', 'Haddad', 'Virtanen', 'Nowak', 'Petrov', 'Tanaka'];
 
     /**
      * @return array<int, array<string, mixed>>

@@ -1517,6 +1517,72 @@
       ]
     },
     {
+      "name": "Board",
+      "item": [
+        {
+          "name": "GET /api/jobs/:job/applications?stage= (board column)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/jobs/{{jobId}}/applications?stage={{occupiedStageId}}&per_page=10&page=1",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "jobs",
+                "{{jobId}}",
+                "applications"
+              ],
+              "query": [
+                {
+                  "key": "stage",
+                  "value": "{{occupiedStageId}}"
+                },
+                {
+                  "key": "per_page",
+                  "value": "10"
+                },
+                {
+                  "key": "page",
+                  "value": "1"
+                }
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "const body = pm.response.json()",
+                  "pm.test('a column only returns its own stage', () => {",
+                  "    const stageId = Number(pm.collectionVariables.get('occupiedStageId'))",
+                  "    body.data.forEach(a => pm.expect(a.current_stage.id, a.candidate.full_name).to.eql(stageId))",
+                  "})",
+                  "pm.test('a card carries what the board renders', () => {",
+                  "    const card = body.data[0]",
+                  "    pm.expect(card.candidate.full_name).to.be.a('string')",
+                  "    pm.expect(card).to.have.property('match_score')",
+                  "    pm.expect(card).to.have.property('eligibility')",
+                  "})",
+                  "pm.test('the column is paginated', () => pm.expect(body.meta.per_page).to.eql(10))"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
       "name": "Auth teardown",
       "item": [
         {

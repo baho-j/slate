@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Columns3 } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -54,8 +54,18 @@ export function ApplicationsPage({ jobId }: { jobId: string }) {
           <ArrowLeft className="size-4" />
           Jobs
         </Link>
-        <h1 className="mt-2 text-2xl font-semibold tracking-tight text-n-900">Applications</h1>
-        <p className="text-sm text-n-500">Candidates who applied to this role.</p>
+        <div className="mt-2 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-semibold tracking-tight text-n-900">Applications</h1>
+            <p className="text-sm text-n-500">Candidates who applied to this role.</p>
+          </div>
+          <Button variant="secondary" size="sm" asChild>
+            <Link to="/jobs/$jobId/board" params={{ jobId }}>
+              <Columns3 className="size-4" />
+              Board view
+            </Link>
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">

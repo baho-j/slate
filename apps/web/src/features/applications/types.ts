@@ -1,3 +1,4 @@
+import type { Interview } from '@/features/interviews/types'
 import type { Paginated } from '@/features/jobs/types'
 
 export type { Paginated }
@@ -54,6 +55,7 @@ export interface ApplicationDetail {
   current_stage: ApplicationStage | null
   available_stages: ApplicationStage[]
   documents: ApplicationDocument[]
+  interviews: Interview[]
   status_history: ApplicationHistoryEntry[]
 }
 

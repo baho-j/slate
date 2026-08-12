@@ -3,6 +3,7 @@ import { ArrowLeft, Download } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast-context'
+import { InterviewsPanel } from '@/features/interviews/InterviewsPanel'
 import { ApplicationStatusBadge } from './ApplicationStatusBadge'
 import { fetchCvDownloadUrl } from './api'
 import { useApplication } from './hooks'
@@ -97,6 +98,8 @@ export function ApplicationDetailPage({
           </p>
         </section>
       )}
+
+      <InterviewsPanel applicationId={application.id} interviews={application.interviews ?? []} />
 
       <section className="space-y-2">
         <h2 className="text-sm font-medium text-n-700">Status history</h2>

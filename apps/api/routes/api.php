@@ -5,6 +5,8 @@ use App\Http\Controllers\ApplicationFieldController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CvUploadController;
 use App\Http\Controllers\HealthController;
+use App\Http\Controllers\InterviewController;
+use App\Http\Controllers\InterviewerController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\PipelineController;
 use App\Http\Controllers\PublicApplicationController;
@@ -49,4 +51,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/applications/{application}', [ApplicationController::class, 'show']);
     Route::patch('/applications/{application}/stage', [ApplicationController::class, 'moveStage']);
     Route::get('/applications/{application}/documents/{document}/url', [ApplicationController::class, 'documentUrl']);
+
+    Route::get('/interviews/mine', [InterviewController::class, 'mine']);
+    Route::get('/interviewers', [InterviewerController::class, 'index']);
+    Route::post('/applications/{application}/interviews', [InterviewController::class, 'store']);
+    Route::patch('/interviews/{interview}', [InterviewController::class, 'update']);
 });

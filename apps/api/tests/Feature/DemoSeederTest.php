@@ -1,6 +1,7 @@
 <?php
 
 use App\Enums\UserRole;
+use App\Models\Interview;
 use App\Models\Job;
 use App\Models\Organization;
 use App\Models\ScreeningCriterion;
@@ -123,4 +124,27 @@ test('seeded candidates are distinct people', function () {
     $names = $applications->pluck('candidate.full_name');
 
     expect($names->unique()->count())->toBe($names->count());
+});
+
+test('the demo interviewer has interviews to open', function () {
+    $admin = User::where('email', 'admin@slate.test')->first();
+    $this->actingAs($admin);
+
+    $ivan = User::where('email', 'interviewer@slate.test')->firstOrFail();
+    $interviews = Interview::where('interviewer_id', $ivan->id)->get();
+
+    expect($interviews)->toHaveCount(3)
+        ->and($interviews->every(fn ($interview) => $interview->scheduled_at->isFuture()))->toBeTrue()
+        ->and($interviews->pluck('organization_id')->unique()->all())->toBe([$ivan->organization_id]);
+});
+
+test('seeding twice does not duplicate interviews', function () {
+    $this->seed(DemoSeeder::class);
+
+    $admin = User::where('email', 'admin@slate.test')->first();
+    $this->actingAs($admin);
+
+    $ivan = User::where('email', 'interviewer@slate.test')->firstOrFail();
+
+    expect(Interview::where('interviewer_id', $ivan->id)->count())->toBe(3);
 });

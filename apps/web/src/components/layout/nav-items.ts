@@ -29,7 +29,14 @@ export function navItemsFor(role: UserRole): NavItem[] {
   return navItems.filter((item) => item.roles.includes(role))
 }
 
+/** An interviewer reaches one application at a time from their interview list; the server checks the assignment. */
+const interviewerApplicationPath = /^\/jobs\/[^/]+\/applications\/[^/]+$/
+
 export function canAccess(role: UserRole, path: string): boolean {
+  if (role === 'interviewer' && interviewerApplicationPath.test(path)) {
+    return true
+  }
+
   const match = navItems.find(
     (item) => item.to === path || (item.to !== '/' && path.startsWith(`${item.to}/`)),
   )

@@ -56,6 +56,26 @@
     {
       "key": "occupiedStageName",
       "value": ""
+    },
+    {
+      "key": "interviewerEmail",
+      "value": "interviewer@slate.test"
+    },
+    {
+      "key": "interviewerId",
+      "value": ""
+    },
+    {
+      "key": "interviewId",
+      "value": ""
+    },
+    {
+      "key": "interviewerToken",
+      "value": ""
+    },
+    {
+      "key": "assignedApplicationId",
+      "value": ""
     }
   ],
   "item": [
@@ -1575,6 +1595,519 @@
                   "    pm.expect(card).to.have.property('eligibility')",
                   "})",
                   "pm.test('the column is paginated', () => pm.expect(body.meta.per_page).to.eql(10))"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Interviews",
+      "item": [
+        {
+          "name": "GET /api/interviewers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/interviewers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "interviewers"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "const staff = pm.response.json().data",
+                  "pm.test('only staff who can interview are listed', () => {",
+                  "    pm.expect(staff.length).to.be.above(0)",
+                  "    staff.forEach(u => pm.expect(u.role).to.be.oneOf(['interviewer', 'recruiter', 'hr_manager']))",
+                  "})",
+                  "const interviewer = staff.find(u => u.role === 'interviewer')",
+                  "pm.test('an interviewer is available to assign', () => pm.expect(interviewer).to.be.an('object'))",
+                  "pm.collectionVariables.set('interviewerId', interviewer.id)"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/auth/login (as the interviewer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/auth/login",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "auth",
+                "login"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{interviewerEmail}}\",\"password\":\"{{password}}\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "pm.test('signed in as an interviewer', () => pm.expect(pm.response.json().data.role).to.eql('interviewer'))",
+                  "pm.collectionVariables.set('interviewerToken', pm.response.json().token)"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/applications/:application (interviewer, before assignment)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{interviewerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications",
+                "{{applicationId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 - an interviewer cannot read an application they are not assigned to',",
+                  "    () => pm.response.to.have.status(403))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/interviewers (interviewer forbidden)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{interviewerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/interviewers",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "interviewers"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 - an interviewer cannot enumerate staff', () => pm.response.to.have.status(403))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/applications/:application/interviews (validation)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}/interviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications",
+                "{{applicationId}}",
+                "interviews"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"interviewer_id\":{{interviewerId}},\"scheduled_at\":\"2020-01-01T09:00:00Z\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422', () => pm.response.to.have.status(422))",
+                  "pm.test('the past is rejected', () => pm.expect(pm.response.json().errors).to.have.property('scheduled_at'))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/applications/:application/interviews",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}/interviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications",
+                "{{applicationId}}",
+                "interviews"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"interviewer_id\":{{interviewerId}},\"scheduled_at\":\"2030-03-01T09:00:00Z\",\"location\":\"Google Meet\",\"notes\":\"Contract test.\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201', () => pm.response.to.have.status(201))",
+                  "const interview = pm.response.json().data",
+                  "pm.test('the interview comes back scheduled', () => {",
+                  "    pm.expect(interview.status).to.eql('scheduled')",
+                  "    pm.expect(interview.location).to.eql('Google Meet')",
+                  "    pm.expect(interview.interviewer.id).to.eql(Number(pm.collectionVariables.get('interviewerId')))",
+                  "})",
+                  "pm.collectionVariables.set('interviewId', interview.id)"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /api/interviews/:interview",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/interviews/{{interviewId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "interviews",
+                "{{interviewId}}"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"location\":\"Helsinki office\",\"status\":\"completed\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "const interview = pm.response.json().data",
+                  "pm.test('the change is persisted', () => {",
+                  "    pm.expect(interview.location).to.eql('Helsinki office')",
+                  "    pm.expect(interview.status).to.eql('completed')",
+                  "})"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/applications/:application (carries interviews)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications",
+                "{{applicationId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "const application = pm.response.json().data",
+                  "pm.test('the application lists its interviews', () => {",
+                  "    pm.expect(application.interviews).to.be.an('array')",
+                  "    pm.expect(application.interviews.length).to.be.above(0)",
+                  "    pm.expect(application.interviews[0]).to.have.property('interviewer')",
+                  "})"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/interviews/mine (as the interviewer)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{interviewerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/interviews/mine",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "interviews",
+                "mine"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "const body = pm.response.json()",
+                  "pm.test('the interviewer sees the interview just scheduled for them', () => {",
+                  "    const id = pm.collectionVariables.get('interviewId')",
+                  "    pm.expect(body.data.some(i => i.id === id), 'scheduled interview present').to.be.true",
+                  "})",
+                  "pm.test('each row carries the candidate and job it belongs to', () => {",
+                  "    body.data.forEach(i => {",
+                  "        pm.expect(i.application).to.have.property('candidate')",
+                  "        pm.expect(i.application).to.have.property('job')",
+                  "    })",
+                  "})",
+                  "pm.test('the list is paginated', () => pm.expect(body.meta).to.have.property('total'))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/applications/:application (interviewer, assigned)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{interviewerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications",
+                "{{applicationId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 - assigning the interview grants access to that application',",
+                  "    () => pm.response.to.have.status(200))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/applications/:application/interviews (interviewer forbidden)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{interviewerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}/interviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications",
+                "{{applicationId}}",
+                "interviews"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"interviewer_id\":{{interviewerId}},\"scheduled_at\":\"2030-03-01T09:00:00Z\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 - an interviewer cannot schedule', () => pm.response.to.have.status(403))"
                 ]
               }
             }

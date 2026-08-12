@@ -41,6 +41,9 @@ class ApplicationDetailResource extends JsonResource
                 'mime' => $document->mime,
                 'size_bytes' => $document->size_bytes,
             ])->all(),
+            'interviews' => InterviewResource::collection(
+                $this->whenLoaded('interviews', fn () => $this->interviews->sortBy('scheduled_at')->values())
+            ),
             'status_history' => $this->statusHistory
                 ->sortByDesc('created_at')
                 ->values()

@@ -7,9 +7,11 @@ use App\Enums\ApplicationStatus;
 use App\Enums\CriterionMode;
 use App\Enums\CriterionOperator;
 use App\Enums\FieldType;
+use App\Enums\InterviewStatus;
 use App\Enums\JobStatus;
 use App\Enums\UserRole;
 use App\Models\Candidate;
+use App\Models\Interview;
 use App\Models\Job;
 use App\Models\Organization;
 use App\Models\PipelineStage;
@@ -31,15 +33,38 @@ class DemoSeeder extends Seeder
         $this->user('candidate@slate.test', 'Cora Candidate', UserRole::Candidate, null);
 
         $hana = $this->user('hr@slate.test', 'Hana HR', UserRole::HrManager, $acme);
-        $this->user('recruiter@slate.test', 'Remy Recruiter', UserRole::Recruiter, $acme);
-        $this->user('interviewer@slate.test', 'Ivan Interviewer', UserRole::Interviewer, $acme);
+        $remy = $this->user('recruiter@slate.test', 'Remy Recruiter', UserRole::Recruiter, $acme);
+        $ivan = $this->user('interviewer@slate.test', 'Ivan Interviewer', UserRole::Interviewer, $acme);
 
         $this->user('hr@globex.test', 'Gwen Globex', UserRole::HrManager, $globex);
         $this->user('recruiter@globex.test', 'Greg Globex', UserRole::Recruiter, $globex);
         $this->user('interviewer@globex.test', 'Gina Globex', UserRole::Interviewer, $globex);
 
-        $this->jobWithFields($acme, $hana, 'Senior Backend Engineer', 'Engineering');
+        $engineering = $this->jobWithFields($acme, $hana, 'Senior Backend Engineer', 'Engineering');
         $this->jobWithFields($acme, $hana, 'Product Designer', 'Design');
+
+        $this->interviews($engineering, $ivan, $remy);
+    }
+
+    private function interviews(Job $job, User $interviewer, User $scheduledBy): void
+    {
+        if (Interview::withoutGlobalScopes()->where('interviewer_id', $interviewer->id)->exists()) {
+            return;
+        }
+
+        $applications = $job->applications()->withoutGlobalScopes()->take(3)->get();
+
+        foreach ($applications as $index => $application) {
+            $interview = $application->interviews()->make([
+                'interviewer_id' => $interviewer->id,
+                'scheduled_at' => now()->addDays($index + 2)->setTime(10 + $index, 0),
+                'location' => ['Google Meet', 'Helsinki office', 'Phone'][$index % 3],
+                'status' => InterviewStatus::Scheduled,
+                'created_by' => $scheduledBy->id,
+            ]);
+            $interview->organization_id = $job->organization_id;
+            $interview->save();
+        }
     }
 
     private function organization(string $slug, string $name, string $website): Organization

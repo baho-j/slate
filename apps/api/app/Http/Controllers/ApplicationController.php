@@ -52,7 +52,7 @@ class ApplicationController extends Controller
 
         $this->authorize('view', $found);
 
-        $found->load(['candidate', 'currentStage', 'documents', 'statusHistory.toStage']);
+        $found->load(['candidate', 'currentStage', 'documents', 'statusHistory.toStage', 'interviews.interviewer']);
 
         return ApplicationDetailResource::make($found);
     }
@@ -67,7 +67,7 @@ class ApplicationController extends Controller
         $toStage = PipelineStage::findOrFail($request->integer('stage_id'));
         $move->handle($application, $toStage, $request->input('note'));
 
-        $application->load(['candidate', 'currentStage', 'documents', 'statusHistory.toStage']);
+        $application->load(['candidate', 'currentStage', 'documents', 'statusHistory.toStage', 'interviews.interviewer']);
 
         return ApplicationDetailResource::make($application);
     }

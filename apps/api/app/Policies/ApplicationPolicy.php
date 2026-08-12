@@ -25,6 +25,11 @@ class ApplicationPolicy
             return $application->candidate?->user_id === $user->id;
         }
 
+        if ($user->isInterviewer()) {
+            return $user->organization_id === $application->organization_id
+                && $application->interviews()->assignedTo($user)->exists();
+        }
+
         return $this->isRecruiterPlus($user) && $user->organization_id === $application->organization_id;
     }
 

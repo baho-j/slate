@@ -43,6 +43,7 @@ export function makeDetail(overrides: Partial<ApplicationDetail> = {}): Applicat
     documents: [
       { id: 10, kind: 'cv', original_name: 'grace.pdf', mime: 'application/pdf', size_bytes: 1234 },
     ],
+    interviews: [],
     status_history: [
       {
         id: 1,

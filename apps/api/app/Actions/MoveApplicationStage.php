@@ -4,8 +4,10 @@ namespace App\Actions;
 
 use App\Models\Application;
 use App\Models\PipelineStage;
+use App\Notifications\ApplicationStageChanged;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 
 class MoveApplicationStage
 {
@@ -13,7 +15,7 @@ class MoveApplicationStage
     {
         $fromStageId = $application->current_stage_id;
 
-        return DB::transaction(function () use ($application, $toStage, $fromStageId, $note) {
+        $application = DB::transaction(function () use ($application, $toStage, $fromStageId, $note) {
             $application->update(['current_stage_id' => $toStage->id]);
 
             $application->statusHistory()->create([
@@ -27,5 +29,10 @@ class MoveApplicationStage
 
             return $application;
         });
+
+        Notification::route('mail', $application->candidate->email)
+            ->notify(new ApplicationStageChanged($application->load('job', 'candidate'), $toStage));
+
+        return $application;
     }
 }

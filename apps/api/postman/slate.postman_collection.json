@@ -70,6 +70,10 @@
       "value": ""
     },
     {
+      "key": "evalInterviewId",
+      "value": ""
+    },
+    {
       "key": "interviewerToken",
       "value": ""
     },
@@ -2108,6 +2112,304 @@
                 "type": "text/javascript",
                 "exec": [
                   "pm.test('403 - an interviewer cannot schedule', () => pm.response.to.have.status(403))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/applications/:application/interviews (to be evaluated)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}/interviews",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications",
+                "{{applicationId}}",
+                "interviews"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"interviewer_id\":{{interviewerId}},\"scheduled_at\":\"2030-04-01T09:00:00Z\",\"location\":\"Phone\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201', () => pm.response.to.have.status(201))",
+                  "pm.collectionVariables.set('evalInterviewId', pm.response.json().data.id)"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/interviews/:interview/evaluation (recruiter forbidden)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/interviews/{{evalInterviewId}}/evaluation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "interviews",
+                "{{evalInterviewId}}",
+                "evaluation"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"rating\":4,\"recommendation\":\"yes\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 - only the assigned interviewer may evaluate',",
+                  "    () => pm.response.to.have.status(403))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/interviews/:interview/evaluation (rating out of range)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{interviewerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/interviews/{{evalInterviewId}}/evaluation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "interviews",
+                "{{evalInterviewId}}",
+                "evaluation"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"rating\":6,\"recommendation\":\"yes\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422', () => pm.response.to.have.status(422))",
+                  "pm.test('the rating bound is enforced in validation',",
+                  "    () => pm.expect(pm.response.json().errors).to.have.property('rating'))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/interviews/:interview/evaluation (assigned interviewer)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{interviewerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/interviews/{{evalInterviewId}}/evaluation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "interviews",
+                "{{evalInterviewId}}",
+                "evaluation"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"rating\":5,\"recommendation\":\"strong_yes\",\"comments\":\"Contract test evaluation.\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201', () => pm.response.to.have.status(201))",
+                  "const evaluation = pm.response.json().data",
+                  "pm.test('the evaluation comes back with its rating and author', () => {",
+                  "    pm.expect(evaluation.rating).to.eql(5)",
+                  "    pm.expect(evaluation.recommendation).to.eql('strong_yes')",
+                  "    pm.expect(evaluation.author.id).to.eql(Number(pm.collectionVariables.get('interviewerId')))",
+                  "})"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/interviews/:interview/evaluation (already evaluated)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{interviewerToken}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/interviews/{{evalInterviewId}}/evaluation",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "interviews",
+                "{{evalInterviewId}}",
+                "evaluation"
+              ]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"rating\":3,\"recommendation\":\"no\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422 - an interview cannot be evaluated twice',",
+                  "    () => pm.response.to.have.status(422))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/applications/:application (evaluation visible to recruiter)",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/applications/{{applicationId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "applications",
+                "{{applicationId}}"
+              ]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "const application = pm.response.json().data",
+                  "pm.test('the recruiter sees the submitted evaluation', () => {",
+                  "    const evaluated = application.interviews.find(i => i.id === pm.collectionVariables.get('evalInterviewId'))",
+                  "    pm.expect(evaluated, 'evaluated interview present').to.be.an('object')",
+                  "    pm.expect(evaluated.status).to.eql('completed')",
+                  "    pm.expect(evaluated.evaluation).to.be.an('object')",
+                  "    pm.expect(evaluated.evaluation.rating).to.eql(5)",
+                  "})"
                 ]
               }
             }

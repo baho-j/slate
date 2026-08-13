@@ -1,6 +1,13 @@
 import type { Paginated } from '@/features/applications/types'
 import { apiClient } from '@/lib/api-client'
-import type { Interview, Interviewer, ScheduleInterviewInput, UpdateInterviewInput } from './types'
+import type {
+  Evaluation,
+  Interview,
+  Interviewer,
+  ScheduleInterviewInput,
+  SubmitEvaluationInput,
+  UpdateInterviewInput,
+} from './types'
 
 interface InterviewResponse {
   data: Interview
@@ -35,5 +42,16 @@ export async function updateInterview(
   input: UpdateInterviewInput,
 ): Promise<Interview> {
   const { data } = await apiClient.patch<InterviewResponse>(`/interviews/${interviewId}`, input)
+  return data.data
+}
+
+export async function submitEvaluation(
+  interviewId: string,
+  input: SubmitEvaluationInput,
+): Promise<Evaluation> {
+  const { data } = await apiClient.post<{ data: Evaluation }>(
+    `/interviews/${interviewId}/evaluation`,
+    input,
+  )
   return data.data
 }

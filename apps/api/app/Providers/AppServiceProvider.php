@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Policies\InterviewEvaluationPolicy;
 use App\Policies\PipelinePolicy;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -31,5 +32,7 @@ class AppServiceProvider extends ServiceProvider
         RateLimiter::for('public', fn (Request $request) => Limit::perMinute(60)->by($request->ip()));
 
         Gate::define('configurePipeline', [PipelinePolicy::class, 'configure']);
+        Gate::define('submitEvaluation', [InterviewEvaluationPolicy::class, 'create']);
+        Gate::define('viewEvaluation', [InterviewEvaluationPolicy::class, 'view']);
     }
 }

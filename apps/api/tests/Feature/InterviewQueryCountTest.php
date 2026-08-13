@@ -4,6 +4,7 @@ use App\Enums\UserRole;
 use App\Models\Application;
 use App\Models\Candidate;
 use App\Models\Interview;
+use App\Models\InterviewEvaluation;
 use App\Models\Job;
 use App\Models\Organization;
 use App\Models\User;
@@ -73,7 +74,8 @@ test('the application detail carries its interviews without extra queries', func
         ->for(Candidate::factory())
         ->create();
 
-    Interview::factory()->for($application)->create(['interviewer_id' => $this->interviewer->id]);
+    $first = Interview::factory()->for($application)->create(['interviewer_id' => $this->interviewer->id]);
+    InterviewEvaluation::factory()->for($first)->create(['created_by' => $this->interviewer->id]);
 
     $this->actingAs($recruiter);
     $url = "/api/applications/{$application->id}";
@@ -83,7 +85,9 @@ test('the application detail carries its interviews without extra queries', func
 
     Interview::factory()->for($application)->count(4)->create([
         'interviewer_id' => User::factory()->for($this->organization)->role(UserRole::Interviewer)->create()->id,
-    ]);
+    ])->each(fn ($interview) => InterviewEvaluation::factory()->for($interview)->create([
+        'created_by' => $this->interviewer->id,
+    ]));
 
     $forFive = countInterviewQueries(fn () => $this->getJson($url)
         ->assertOk()

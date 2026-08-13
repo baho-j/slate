@@ -13,7 +13,7 @@ import { authKeys } from '@/features/auth/hooks'
 import type { User, UserRole } from '@/features/auth/types'
 import { InterviewsPanel } from './InterviewsPanel'
 import { MyInterviewsPage } from './MyInterviewsPage'
-import type { Interview, Interviewer } from './types'
+import type { Evaluation, Interview, Interviewer } from './types'
 
 export function makeInterviewer(overrides: Partial<Interviewer> = {}): Interviewer {
   return {
@@ -39,6 +39,18 @@ export function makeInterview(overrides: Partial<Interview> = {}): Interview {
       job: { id: 'job-1', title: 'Backend Engineer' },
     },
     created_at: '2026-08-01T00:00:00+00:00',
+    ...overrides,
+  }
+}
+
+export function makeEvaluation(overrides: Partial<Evaluation> = {}): Evaluation {
+  return {
+    id: 'eval-1',
+    rating: 4,
+    recommendation: 'yes',
+    comments: 'Solid across the board.',
+    author: { id: 7, name: 'Alan Turing' },
+    created_at: '2026-09-02T09:00:00+00:00',
     ...overrides,
   }
 }

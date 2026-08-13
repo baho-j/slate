@@ -9,6 +9,7 @@ use App\Enums\CriterionOperator;
 use App\Enums\FieldType;
 use App\Enums\InterviewStatus;
 use App\Enums\JobStatus;
+use App\Enums\Recommendation;
 use App\Enums\UserRole;
 use App\Models\Candidate;
 use App\Models\Interview;
@@ -55,15 +56,30 @@ class DemoSeeder extends Seeder
         $applications = $job->applications()->withoutGlobalScopes()->take(3)->get();
 
         foreach ($applications as $index => $application) {
+            $completed = $index === 0;
+
             $interview = $application->interviews()->make([
                 'interviewer_id' => $interviewer->id,
-                'scheduled_at' => now()->addDays($index + 2)->setTime(10 + $index, 0),
+                'scheduled_at' => $completed
+                    ? now()->subDays(2)->setTime(10, 0)
+                    : now()->addDays($index + 2)->setTime(10 + $index, 0),
                 'location' => ['Google Meet', 'Helsinki office', 'Phone'][$index % 3],
-                'status' => InterviewStatus::Scheduled,
+                'status' => $completed ? InterviewStatus::Completed : InterviewStatus::Scheduled,
                 'created_by' => $scheduledBy->id,
             ]);
             $interview->organization_id = $job->organization_id;
             $interview->save();
+
+            if ($completed) {
+                $evaluation = $interview->evaluation()->make([
+                    'rating' => 4,
+                    'recommendation' => Recommendation::Yes,
+                    'comments' => 'Strong technically; recommend a follow-up on system design.',
+                    'created_by' => $interviewer->id,
+                ]);
+                $evaluation->organization_id = $job->organization_id;
+                $evaluation->save();
+            }
         }
     }
 

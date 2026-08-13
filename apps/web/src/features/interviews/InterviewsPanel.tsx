@@ -1,4 +1,4 @@
-import { CalendarPlus, MapPin, MoreHorizontal } from 'lucide-react'
+import { CalendarPlus, ClipboardCheck, MapPin, MoreHorizontal } from 'lucide-react'
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import {
@@ -10,9 +10,11 @@ import {
 import { useToast } from '@/components/ui/toast-context'
 import { useMe } from '@/features/auth/hooks'
 import { formatWhen } from './datetime'
+import { EvaluationSummary } from './EvaluationSummary'
 import { useUpdateInterview } from './hooks'
 import { InterviewStatusBadge } from './InterviewStatusBadge'
 import { ScheduleInterviewDialog } from './ScheduleInterviewDialog'
+import { SubmitEvaluationDialog } from './SubmitEvaluationDialog'
 import type { Interview, InterviewStatus } from './types'
 
 const outcomes: { value: InterviewStatus; label: string }[] = [
@@ -33,6 +35,7 @@ export function InterviewsPanel({
   const [editing, setEditing] = useState<Interview | undefined>()
 
   const canSchedule = user?.role === 'hr_manager' || user?.role === 'recruiter'
+  const currentUserId = user?.id
 
   return (
     <section className="space-y-2">
@@ -65,6 +68,7 @@ export function InterviewsPanel({
               applicationId={applicationId}
               interview={interview}
               canManage={canSchedule}
+              isAssignedInterviewer={interview.interviewer?.id === currentUserId}
               onReschedule={() => {
                 setEditing(interview)
                 setScheduling(true)
@@ -94,15 +98,20 @@ function InterviewRow({
   applicationId,
   interview,
   canManage,
+  isAssignedInterviewer,
   onReschedule,
 }: {
   applicationId: string
   interview: Interview
   canManage: boolean
+  isAssignedInterviewer: boolean
   onReschedule: () => void
 }) {
   const { toast } = useToast()
   const update = useUpdateInterview(applicationId)
+  const [evaluating, setEvaluating] = useState(false)
+
+  const canEvaluate = isAssignedInterviewer && interview.status === 'scheduled'
 
   function setStatus(status: InterviewStatus) {
     update.mutate(
@@ -115,47 +124,66 @@ function InterviewRow({
   }
 
   return (
-    <li className="flex flex-wrap items-center justify-between gap-3 rounded-md border border-n-200 bg-white p-4">
-      <div className="min-w-0">
-        <p className="text-sm font-medium text-n-900">{formatWhen(interview.scheduled_at)}</p>
-        <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-n-500">
-          {interview.interviewer && <span>{interview.interviewer.name}</span>}
-          {interview.location && (
-            <span className="inline-flex items-center gap-1">
-              <MapPin className="size-3.5" />
-              {interview.location}
-            </span>
+    <li className="rounded-md border border-n-200 bg-white p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-medium text-n-900">{formatWhen(interview.scheduled_at)}</p>
+          <p className="mt-0.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-n-500">
+            {interview.interviewer && <span>{interview.interviewer.name}</span>}
+            {interview.location && (
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="size-3.5" />
+                {interview.location}
+              </span>
+            )}
+          </p>
+          {interview.notes && <p className="mt-1 text-sm text-n-500">{interview.notes}</p>}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <InterviewStatusBadge status={interview.status} />
+          {canEvaluate && (
+            <Button variant="secondary" size="sm" onClick={() => setEvaluating(true)}>
+              <ClipboardCheck className="size-4" />
+              Evaluate
+            </Button>
           )}
-        </p>
-        {interview.notes && <p className="mt-1 text-sm text-n-500">{interview.notes}</p>}
+          {canManage && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  aria-label={`Interview options for ${formatWhen(interview.scheduled_at)}`}
+                >
+                  <MoreHorizontal className="size-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onSelect={onReschedule}>Reschedule</DropdownMenuItem>
+                {outcomes
+                  .filter((outcome) => outcome.value !== interview.status)
+                  .map((outcome) => (
+                    <DropdownMenuItem key={outcome.value} onSelect={() => setStatus(outcome.value)}>
+                      {outcome.label}
+                    </DropdownMenuItem>
+                  ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
 
-      <div className="flex items-center gap-2">
-        <InterviewStatusBadge status={interview.status} />
-        {canManage && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="sm"
-                aria-label={`Interview options for ${formatWhen(interview.scheduled_at)}`}
-              >
-                <MoreHorizontal className="size-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onSelect={onReschedule}>Reschedule</DropdownMenuItem>
-              {outcomes
-                .filter((outcome) => outcome.value !== interview.status)
-                .map((outcome) => (
-                  <DropdownMenuItem key={outcome.value} onSelect={() => setStatus(outcome.value)}>
-                    {outcome.label}
-                  </DropdownMenuItem>
-                ))}
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
+      {interview.evaluation && <EvaluationSummary evaluation={interview.evaluation} />}
+
+      {canEvaluate && (
+        <SubmitEvaluationDialog
+          interviewId={interview.id}
+          applicationId={applicationId}
+          open={evaluating}
+          onOpenChange={setEvaluating}
+        />
+      )}
     </li>
   )
 }

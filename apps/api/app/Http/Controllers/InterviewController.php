@@ -7,8 +7,10 @@ use App\Http\Requests\Interviews\UpdateInterviewRequest;
 use App\Http\Resources\InterviewResource;
 use App\Models\Application;
 use App\Models\Interview;
+use App\Notifications\InterviewScheduled;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
+use Illuminate\Support\Facades\Notification;
 
 class InterviewController extends Controller
 {
@@ -19,7 +21,13 @@ class InterviewController extends Controller
             'created_by' => $request->user()->id,
         ]);
 
-        return InterviewResource::make($interview->load(['interviewer', 'application.candidate', 'application.job']));
+        $interview->load(['interviewer', 'application.candidate', 'application.job']);
+
+        Notification::route('mail', $interview->application->candidate->email)
+            ->notify(InterviewScheduled::forCandidate($interview));
+        $interview->interviewer->notify(InterviewScheduled::forInterviewer($interview));
+
+        return InterviewResource::make($interview);
     }
 
     public function update(UpdateInterviewRequest $request, Interview $interview): InterviewResource

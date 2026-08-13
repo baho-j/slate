@@ -1,5 +1,10 @@
 <?php
 
+use App\Models\Application;
+use App\Models\Candidate;
+use App\Models\Job;
+use App\Models\Organization;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -46,7 +51,14 @@ expect()->extend('toBeOne', function () {
 |
 */
 
-function something()
+function makeApplicationForMail(): Application
 {
-    // ..
+    $org = Organization::factory()->create();
+    $user = User::factory()->for($org)->create();
+    test()->actingAs($user);
+
+    $job = Job::factory()->for($org)->create(['title' => 'Backend Engineer']);
+    $candidate = Candidate::factory()->create(['full_name' => 'Cora Candidate']);
+
+    return Application::factory()->for($job)->for($candidate)->create();
 }

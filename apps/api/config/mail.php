@@ -70,6 +70,12 @@ return [
             'path' => env('MAIL_SENDMAIL_PATH', '/usr/sbin/sendmail -bs -i'),
         ],
 
+        'acs' => [
+            'transport' => 'acs',
+            'endpoint' => env('ACS_EMAIL_ENDPOINT'),
+            'key' => env('ACS_EMAIL_KEY'),
+        ],
+
         'log' => [
             'transport' => 'log',
             'channel' => env('MAIL_LOG_CHANNEL'),

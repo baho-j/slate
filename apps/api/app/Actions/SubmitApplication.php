@@ -10,11 +10,13 @@ use App\Models\ApplicationAnswer;
 use App\Models\ApplicationField;
 use App\Models\Candidate;
 use App\Models\Job;
+use App\Notifications\ApplicationReceived;
 use App\Services\Criteria\CriteriaEvaluator;
 use App\Services\Criteria\Evaluation;
 use App\Services\CvStorage;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Notification;
 use Illuminate\Validation\ValidationException;
 
 class SubmitApplication
@@ -40,7 +42,7 @@ class SubmitApplication
         $answers = $this->answersForFields($fields, $data['answers'] ?? []);
         $evaluation = $this->evaluator->evaluate($this->rulesFor($job), $answers);
 
-        return DB::transaction(function () use ($job, $data, $verification, $firstStage, $fields, $answers, $evaluation) {
+        $application = DB::transaction(function () use ($job, $data, $verification, $firstStage, $fields, $answers, $evaluation) {
             $candidate = Candidate::firstOrCreate(
                 ['email' => $data['email']],
                 ['full_name' => $data['full_name']],
@@ -85,8 +87,13 @@ class SubmitApplication
                 'note' => $this->submissionNote($evaluation),
             ]);
 
-            return $application;
+            return $application->setRelation('job', $job)->setRelation('candidate', $candidate);
         });
+
+        Notification::route('mail', $application->candidate->email)
+            ->notify(new ApplicationReceived($application));
+
+        return $application;
     }
 
     /**

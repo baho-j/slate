@@ -27,6 +27,10 @@ class InterviewResource extends JsonResource
                 'name' => $this->interviewer->name,
                 'email' => $this->interviewer->email,
             ]),
+            'evaluation' => $this->whenLoaded(
+                'evaluation',
+                fn () => $this->evaluation ? InterviewEvaluationResource::make($this->evaluation) : null
+            ),
             'application' => $this->whenLoaded('application', fn () => [
                 'id' => $this->application->id,
                 'candidate' => [

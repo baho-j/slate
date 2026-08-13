@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable([
     'application_id', 'interviewer_id', 'scheduled_at',
@@ -43,6 +44,12 @@ class Interview extends Model
     public function interviewer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'interviewer_id');
+    }
+
+    /** @return HasOne<InterviewEvaluation, $this> */
+    public function evaluation(): HasOne
+    {
+        return $this->hasOne(InterviewEvaluation::class);
     }
 
     /**

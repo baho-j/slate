@@ -7,6 +7,7 @@ use App\Http\Controllers\CvUploadController;
 use App\Http\Controllers\HealthController;
 use App\Http\Controllers\InterviewController;
 use App\Http\Controllers\InterviewerController;
+use App\Http\Controllers\InterviewEvaluationController;
 use App\Http\Controllers\JobController;
 use App\Http\Controllers\PipelineController;
 use App\Http\Controllers\PublicApplicationController;
@@ -56,4 +57,5 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/interviewers', [InterviewerController::class, 'index']);
     Route::post('/applications/{application}/interviews', [InterviewController::class, 'store']);
     Route::patch('/interviews/{interview}', [InterviewController::class, 'update']);
+    Route::post('/interviews/{interview}/evaluation', [InterviewEvaluationController::class, 'store']);
 });

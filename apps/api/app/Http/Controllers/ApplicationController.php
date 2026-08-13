@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\MoveApplicationStage;
 use App\Enums\ApplicationStatus;
+use App\Enums\UserRole;
 use App\Http\Requests\Applications\MoveApplicationStageRequest;
 use App\Http\Resources\ApplicationDetailResource;
 use App\Http\Resources\ApplicationResource;
@@ -11,6 +12,7 @@ use App\Models\Application;
 use App\Models\ApplicationDocument;
 use App\Models\Job;
 use App\Models\PipelineStage;
+use App\Models\User;
 use App\Services\CvStorage;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -46,13 +48,13 @@ class ApplicationController extends Controller
         return ApplicationResource::collection($applications);
     }
 
-    public function show(string $application): ApplicationDetailResource
+    public function show(Request $request, string $application): ApplicationDetailResource
     {
         $found = $this->resolveApplication($application);
 
         $this->authorize('view', $found);
 
-        $found->load(['candidate', 'currentStage', 'documents', 'statusHistory.toStage', 'interviews.interviewer']);
+        $found->load($this->detailRelations($request->user()));
 
         return ApplicationDetailResource::make($found);
     }
@@ -67,9 +69,23 @@ class ApplicationController extends Controller
         $toStage = PipelineStage::findOrFail($request->integer('stage_id'));
         $move->handle($application, $toStage, $request->input('note'));
 
-        $application->load(['candidate', 'currentStage', 'documents', 'statusHistory.toStage', 'interviews.interviewer']);
+        $application->load($this->detailRelations($request->user()));
 
         return ApplicationDetailResource::make($application);
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function detailRelations(User $user): array
+    {
+        $relations = ['candidate', 'currentStage', 'documents', 'statusHistory.toStage', 'interviews.interviewer'];
+
+        if ($user->isSuperAdmin() || $user->hasRole(UserRole::HrManager, UserRole::Recruiter)) {
+            $relations[] = 'interviews.evaluation.author';
+        }
+
+        return $relations;
     }
 
     public function documentUrl(CvStorage $cv, string $application, string $document): JsonResponse

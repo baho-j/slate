@@ -2,8 +2,21 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import type { AxiosError } from 'axios'
 import { applicationKeys } from '@/features/applications/hooks'
 import type { Paginated } from '@/features/applications/types'
-import { fetchInterviewers, fetchMyInterviews, scheduleInterview, updateInterview } from './api'
-import type { Interview, Interviewer, ScheduleInterviewInput, UpdateInterviewInput } from './types'
+import {
+  fetchInterviewers,
+  fetchMyInterviews,
+  scheduleInterview,
+  submitEvaluation,
+  updateInterview,
+} from './api'
+import type {
+  Evaluation,
+  Interview,
+  Interviewer,
+  ScheduleInterviewInput,
+  SubmitEvaluationInput,
+  UpdateInterviewInput,
+} from './types'
 
 export const interviewKeys = {
   all: ['interviews'] as const,
@@ -35,6 +48,20 @@ export function useScheduleInterview(applicationId: string) {
     mutationFn: (input) => scheduleInterview(applicationId, input),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: applicationKeys.detail(applicationId) })
+      queryClient.invalidateQueries({ queryKey: interviewKeys.all })
+    },
+  })
+}
+
+export function useSubmitEvaluation(interviewId: string, applicationId?: string) {
+  const queryClient = useQueryClient()
+
+  return useMutation<Evaluation, AxiosError, SubmitEvaluationInput>({
+    mutationFn: (input) => submitEvaluation(interviewId, input),
+    onSuccess: () => {
+      if (applicationId) {
+        queryClient.invalidateQueries({ queryKey: applicationKeys.detail(applicationId) })
+      }
       queryClient.invalidateQueries({ queryKey: interviewKeys.all })
     },
   })

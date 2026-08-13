@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\InterviewStatus;
 use App\Enums\UserRole;
 use App\Models\Interview;
 use App\Models\Job;
@@ -134,8 +135,24 @@ test('the demo interviewer has interviews to open', function () {
     $interviews = Interview::where('interviewer_id', $ivan->id)->get();
 
     expect($interviews)->toHaveCount(3)
-        ->and($interviews->every(fn ($interview) => $interview->scheduled_at->isFuture()))->toBeTrue()
+        ->and($interviews->where('status', InterviewStatus::Scheduled)
+            ->every(fn ($interview) => $interview->scheduled_at->isFuture()))->toBeTrue()
         ->and($interviews->pluck('organization_id')->unique()->all())->toBe([$ivan->organization_id]);
+});
+
+test('the demo data includes a completed, evaluated interview', function () {
+    $admin = User::where('email', 'admin@slate.test')->first();
+    $this->actingAs($admin);
+
+    $ivan = User::where('email', 'interviewer@slate.test')->firstOrFail();
+    $completed = Interview::where('interviewer_id', $ivan->id)
+        ->where('status', InterviewStatus::Completed)
+        ->with('evaluation')
+        ->get();
+
+    expect($completed)->toHaveCount(1)
+        ->and($completed->first()->evaluation)->not->toBeNull()
+        ->and($completed->first()->evaluation->rating)->toBe(4);
 });
 
 test('seeding twice does not duplicate interviews', function () {

@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\ApplicationController;
 use App\Http\Controllers\ApplicationFieldController;
 use App\Http\Controllers\AuthController;
@@ -59,6 +60,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/applications/{application}/interviews', [InterviewController::class, 'store']);
     Route::patch('/interviews/{interview}', [InterviewController::class, 'update']);
     Route::post('/interviews/{interview}/evaluation', [InterviewEvaluationController::class, 'store']);
+
+    Route::get('/analytics/overview', [AnalyticsController::class, 'overview']);
+    Route::get('/analytics/jobs/{job}', [AnalyticsController::class, 'job']);
 
     Route::get('/talent-pool', [TalentPoolController::class, 'index']);
     Route::post('/talent-pool', [TalentPoolController::class, 'store']);

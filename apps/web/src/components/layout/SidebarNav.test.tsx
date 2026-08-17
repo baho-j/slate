@@ -57,12 +57,12 @@ describe('SidebarNav', () => {
   })
 
   describe('per role', () => {
-    it('hides Jobs, Candidates and Settings from an interviewer', async () => {
+    it('hides Jobs, Talent pool and Settings from an interviewer', async () => {
       await renderInApp(<SidebarNav />, as('interviewer'))
 
       expect(screen.getByRole('link', { name: 'Interviews' })).toBeInTheDocument()
       expect(screen.queryByRole('link', { name: 'Jobs' })).not.toBeInTheDocument()
-      expect(screen.queryByRole('link', { name: 'Candidates' })).not.toBeInTheDocument()
+      expect(screen.queryByRole('link', { name: 'Talent pool' })).not.toBeInTheDocument()
       expect(screen.queryByRole('link', { name: 'Settings' })).not.toBeInTheDocument()
     })
 

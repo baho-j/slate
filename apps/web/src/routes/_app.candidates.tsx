@@ -1,12 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { PagePlaceholder } from '@/components/layout/PagePlaceholder'
+import { TalentPoolPage } from '@/features/talent-pool/TalentPoolPage'
 
 export const Route = createFileRoute('/_app/candidates')({
-  component: CandidatesPage,
+  component: TalentPoolPage,
 })
-
-function CandidatesPage() {
-  return (
-    <PagePlaceholder title="Candidates" description="Applications moving through the pipeline." />
-  )
-}

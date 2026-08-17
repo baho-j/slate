@@ -56,6 +56,12 @@ export interface ApplicationHistoryEntry {
   created_at: string
 }
 
+export interface TalentPoolSummary {
+  id: string
+  tags: string[]
+  note: string | null
+}
+
 export interface ApplicationDetail {
   id: string
   status: ApplicationStatus
@@ -64,10 +70,12 @@ export interface ApplicationDetail {
   cover_note: string | null
   created_at: string
   candidate: {
+    id: string
     full_name: string
     email: string
     phone: string | null
   }
+  talent_pool: TalentPoolSummary | null
   current_stage: ApplicationStage | null
   available_stages: ApplicationStage[]
   documents: ApplicationDocument[]

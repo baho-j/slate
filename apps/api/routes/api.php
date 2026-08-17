@@ -13,6 +13,7 @@ use App\Http\Controllers\PipelineController;
 use App\Http\Controllers\PublicApplicationController;
 use App\Http\Controllers\PublicCareersController;
 use App\Http\Controllers\ScreeningCriterionController;
+use App\Http\Controllers\TalentPoolController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', HealthController::class);
@@ -58,4 +59,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/applications/{application}/interviews', [InterviewController::class, 'store']);
     Route::patch('/interviews/{interview}', [InterviewController::class, 'update']);
     Route::post('/interviews/{interview}/evaluation', [InterviewEvaluationController::class, 'store']);
+
+    Route::get('/talent-pool', [TalentPoolController::class, 'index']);
+    Route::post('/talent-pool', [TalentPoolController::class, 'store']);
+    Route::delete('/talent-pool/{talentPoolEntry}', [TalentPoolController::class, 'destroy']);
 });

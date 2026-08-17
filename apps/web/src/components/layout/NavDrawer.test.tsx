@@ -43,7 +43,7 @@ describe('NavDrawer', () => {
     const onOpenChange = vi.fn()
     await renderInApp(<NavDrawer open onOpenChange={onOpenChange} />)
 
-    await user.click(screen.getByRole('link', { name: 'Candidates' }))
+    await user.click(screen.getByRole('link', { name: 'Talent pool' }))
 
     expect(onOpenChange).toHaveBeenCalledWith(false)
   })

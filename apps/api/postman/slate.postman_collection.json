@@ -80,6 +80,14 @@
     {
       "key": "assignedApplicationId",
       "value": ""
+    },
+    {
+      "key": "candidateId",
+      "value": ""
+    },
+    {
+      "key": "talentPoolEntryId",
+      "value": ""
     }
   ],
   "item": [
@@ -1953,6 +1961,7 @@
                 "exec": [
                   "pm.test('200', () => pm.response.to.have.status(200))",
                   "const application = pm.response.json().data",
+                  "pm.collectionVariables.set('candidateId', application.candidate.id)",
                   "pm.test('the application lists its interviews', () => {",
                   "    pm.expect(application.interviews).to.be.an('array')",
                   "    pm.expect(application.interviews.length).to.be.above(0)",
@@ -2410,6 +2419,161 @@
                   "    pm.expect(evaluated.evaluation).to.be.an('object')",
                   "    pm.expect(evaluated.evaluation.rating).to.eql(5)",
                   "})"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Talent pool",
+      "item": [
+        {
+          "name": "POST /api/talent-pool (add candidate)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/talent-pool",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "talent-pool"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"candidate_id\":\"{{candidateId}}\",\"tags\":[\"senior\",\"backend\"],\"note\":\"Contract test.\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201', () => pm.response.to.have.status(201))",
+                  "const entry = pm.response.json().data",
+                  "pm.collectionVariables.set('talentPoolEntryId', entry.id)",
+                  "pm.test('the entry carries the candidate and tags', () => {",
+                  "    pm.expect(entry.candidate.id).to.eql(pm.collectionVariables.get('candidateId'))",
+                  "    pm.expect(entry.tags).to.include('senior')",
+                  "})"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/talent-pool (re-add updates, no duplicate)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/talent-pool",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "talent-pool"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"candidate_id\":\"{{candidateId}}\",\"tags\":[\"frontend\"]}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200 - re-adding updates rather than creating', () => pm.response.to.have.status(200))",
+                  "const entry = pm.response.json().data",
+                  "pm.test('the same entry is returned with new tags', () => {",
+                  "    pm.expect(entry.id).to.eql(pm.collectionVariables.get('talentPoolEntryId'))",
+                  "    pm.expect(entry.tags).to.eql(['frontend'])",
+                  "})"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/talent-pool (list + tag filter)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/talent-pool?tag=frontend",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "talent-pool"],
+              "query": [{ "key": "tag", "value": "frontend" }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "const body = pm.response.json()",
+                  "pm.test('the pooled candidate is returned under the tag', () => {",
+                  "    pm.expect(body.data.some(e => e.id === pm.collectionVariables.get('talentPoolEntryId'))).to.be.true",
+                  "})",
+                  "pm.test('the list is cursor paginated', () => pm.expect(body.meta).to.have.property('next_cursor'))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/talent-pool (interviewer forbidden)",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "auth": {
+              "type": "bearer",
+              "bearer": [{ "key": "token", "value": "{{interviewerToken}}", "type": "string" }]
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/talent-pool",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "talent-pool"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('403 - an interviewer cannot browse the pool', () => pm.response.to.have.status(403))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /api/talent-pool/:entry",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/talent-pool/{{talentPoolEntryId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "talent-pool", "{{talentPoolEntryId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204', () => pm.response.to.have.status(204))"
                 ]
               }
             }

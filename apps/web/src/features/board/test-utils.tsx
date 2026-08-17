@@ -8,7 +8,7 @@ import {
 } from '@tanstack/react-router'
 import { render, screen } from '@testing-library/react'
 import { ToastRoot } from '@/components/ui/toast-context'
-import type { Paginated } from '@/features/applications/types'
+import type { CursorPaginated } from '@/features/applications/types'
 import { authKeys } from '@/features/auth/hooks'
 import type { User, UserRole } from '@/features/auth/types'
 import { BoardPage } from './BoardPage'
@@ -50,20 +50,16 @@ export function makeCard(overrides: Partial<ApplicationListItem> = {}): Applicat
 
 export function pageOf(
   items: ApplicationListItem[],
-  total = items.length,
-): Paginated<ApplicationListItem> {
-  const perPage = 10
-
+  cursors: { next?: string | null; prev?: string | null } = {},
+): CursorPaginated<ApplicationListItem> {
   return {
     data: items,
-    links: { first: null, last: null, prev: null, next: null },
+    links: { first: null, last: null, prev: cursors.prev ?? null, next: cursors.next ?? null },
     meta: {
-      current_page: 1,
-      from: 1,
-      last_page: Math.max(1, Math.ceil(total / perPage)),
-      per_page: perPage,
-      to: items.length,
-      total,
+      path: 'http://localhost/api/jobs/job-1/applications',
+      per_page: 10,
+      next_cursor: cursors.next ?? null,
+      prev_cursor: cursors.prev ?? null,
     },
   }
 }

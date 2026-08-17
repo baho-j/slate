@@ -54,6 +54,39 @@ describe('ApplicationsPage', () => {
     )
   })
 
+  it('passes the eligibility filter to the query', async () => {
+    fetchApplicationsMock.mockResolvedValue(page([makeListItem()]))
+
+    await renderApplications('/jobs/job-1/applications')
+    await screen.findByText('Grace Hopper')
+
+    await userEvent.click(screen.getByRole('combobox', { name: 'Filter by eligibility' }))
+    await userEvent.click(await screen.findByRole('option', { name: 'Ineligible' }))
+
+    await waitFor(() =>
+      expect(fetchApplicationsMock).toHaveBeenCalledWith(
+        'job-1',
+        expect.objectContaining({ eligibility: 'ineligible' }),
+      ),
+    )
+  })
+
+  it('follows the next cursor when paging', async () => {
+    fetchApplicationsMock.mockResolvedValue(page([makeListItem()], { next_cursor: 'cursor-2' }))
+
+    await renderApplications('/jobs/job-1/applications')
+    await screen.findByText('Grace Hopper')
+
+    await userEvent.click(screen.getByRole('button', { name: 'Next' }))
+
+    await waitFor(() =>
+      expect(fetchApplicationsMock).toHaveBeenCalledWith(
+        'job-1',
+        expect.objectContaining({ cursor: 'cursor-2' }),
+      ),
+    )
+  })
+
   it('shows an error state', async () => {
     fetchApplicationsMock.mockRejectedValue(new Error('boom'))
 

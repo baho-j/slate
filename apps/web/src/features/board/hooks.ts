@@ -2,7 +2,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import type { AxiosError } from 'axios'
 import { moveApplicationStage } from '@/features/applications/api'
 import { applicationKeys } from '@/features/applications/hooks'
-import type { Paginated } from '@/features/applications/types'
+import type { CursorPaginated } from '@/features/applications/types'
 import { fetchPipeline, fetchStageApplications, replaceStages, type StageInput } from './api'
 import type { ApplicationListItem, Pipeline, PipelineStage } from './types'
 
@@ -12,8 +12,8 @@ export const boardKeys = {
   all: ['board'] as const,
   pipeline: (jobId: string) => [...boardKeys.all, jobId, 'pipeline'] as const,
   columns: (jobId: string) => [...boardKeys.all, jobId, 'column'] as const,
-  column: (jobId: string, stageId: number, page: number) =>
-    [...boardKeys.columns(jobId), { stageId, page }] as const,
+  column: (jobId: string, stageId: number, cursor: string | null) =>
+    [...boardKeys.columns(jobId), { stageId, cursor }] as const,
 }
 
 export function usePipeline(jobId: string) {
@@ -23,10 +23,15 @@ export function usePipeline(jobId: string) {
   })
 }
 
-export function useStageColumn(jobId: string, stageId: number, page: number, enabled = true) {
-  return useQuery<Paginated<ApplicationListItem>, AxiosError>({
-    queryKey: boardKeys.column(jobId, stageId, page),
-    queryFn: () => fetchStageApplications(jobId, stageId, page, PER_COLUMN),
+export function useStageColumn(
+  jobId: string,
+  stageId: number,
+  cursor: string | null,
+  enabled = true,
+) {
+  return useQuery<CursorPaginated<ApplicationListItem>, AxiosError>({
+    queryKey: boardKeys.column(jobId, stageId, cursor),
+    queryFn: () => fetchStageApplications(jobId, stageId, cursor, PER_COLUMN),
     placeholderData: keepPreviousData,
     enabled,
   })
@@ -55,7 +60,12 @@ interface MoveVariables {
   to: PipelineStage
 }
 
-type ColumnEntry = [readonly unknown[], Paginated<ApplicationListItem> | undefined]
+type ColumnEntry = [readonly unknown[], CursorPaginated<ApplicationListItem> | undefined]
+
+interface MoveContext {
+  snapshot: ColumnEntry[]
+  pipeline?: Pipeline
+}
 
 /**
  * Moves the card between the cached columns before the request goes out and restores every
@@ -64,14 +74,15 @@ type ColumnEntry = [readonly unknown[], Paginated<ApplicationListItem> | undefin
 export function useMoveApplication(jobId: string) {
   const queryClient = useQueryClient()
 
-  return useMutation<unknown, AxiosError, MoveVariables, { snapshot: ColumnEntry[] }>({
+  return useMutation<unknown, AxiosError, MoveVariables, MoveContext>({
     mutationFn: ({ application, to }) => moveApplicationStage(application.id, to.id),
     onMutate: async ({ application, from, to }) => {
       await queryClient.cancelQueries({ queryKey: boardKeys.columns(jobId) })
 
-      const snapshot = queryClient.getQueriesData<Paginated<ApplicationListItem>>({
+      const snapshot = queryClient.getQueriesData<CursorPaginated<ApplicationListItem>>({
         queryKey: boardKeys.columns(jobId),
       }) as ColumnEntry[]
+      const pipeline = queryClient.getQueryData<Pipeline>(boardKeys.pipeline(jobId))
 
       if (from) {
         updateColumn(queryClient, jobId, from.id, (items) =>
@@ -84,17 +95,41 @@ export function useMoveApplication(jobId: string) {
         ...items.filter((item) => item.id !== application.id),
       ])
 
-      return { snapshot }
+      if (pipeline && from && from.id !== to.id) {
+        adjustCounts(queryClient, jobId, pipeline, { [from.id]: -1, [to.id]: 1 })
+      }
+
+      return { snapshot, pipeline }
     },
     onError: (_error, _variables, context) => {
       for (const [key, data] of context?.snapshot ?? []) {
         queryClient.setQueryData(key, data)
+      }
+      if (context?.pipeline) {
+        queryClient.setQueryData(boardKeys.pipeline(jobId), context.pipeline)
       }
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: boardKeys.all })
       queryClient.invalidateQueries({ queryKey: applicationKeys.all })
     },
+  })
+}
+
+function adjustCounts(
+  queryClient: ReturnType<typeof useQueryClient>,
+  jobId: string,
+  pipeline: Pipeline,
+  deltas: Record<number, number>,
+): void {
+  queryClient.setQueryData<Pipeline>(boardKeys.pipeline(jobId), {
+    ...pipeline,
+    stages: pipeline.stages.map((stage) => {
+      const delta = deltas[stage.id] ?? 0
+      return delta
+        ? { ...stage, application_count: Math.max(0, stage.application_count + delta) }
+        : stage
+    }),
   })
 }
 
@@ -112,19 +147,16 @@ function updateColumn(
   stageId: number,
   transform: (items: ApplicationListItem[]) => ApplicationListItem[],
 ): void {
-  const pages = queryClient.getQueriesData<Paginated<ApplicationListItem>>({
+  const pages = queryClient.getQueriesData<CursorPaginated<ApplicationListItem>>({
     queryKey: boardKeys.columns(jobId),
   })
 
   for (const [key, page] of pages) {
     if (!page || !isColumnFor(key, stageId)) continue
 
-    const data = transform(page.data)
-
-    queryClient.setQueryData<Paginated<ApplicationListItem>>(key, {
+    queryClient.setQueryData<CursorPaginated<ApplicationListItem>>(key, {
       ...page,
-      data,
-      meta: { ...page.meta, total: page.meta.total + (data.length - page.data.length) },
+      data: transform(page.data),
     })
   }
 }

@@ -76,16 +76,22 @@ test('a column only returns the applications sitting in that stage', function ()
         ->getJson("/api/jobs/{$this->job->id}/applications?stage={$stages->get(1)->id}")
         ->assertOk()
         ->assertJsonCount(2, 'data')
-        ->assertJsonPath('meta.total', 2);
+        ->assertJsonPath('meta.next_cursor', null);
 });
 
 test('a column paginates independently of the other columns', function () {
     fillStage($this->job, $this->stage->id, 25);
+    $this->actingAs($this->recruiter);
 
-    $this->actingAs($this->recruiter)
-        ->getJson("/api/jobs/{$this->job->id}/applications?stage={$this->stage->id}&per_page=10&page=3")
-        ->assertOk()
-        ->assertJsonCount(5, 'data')
-        ->assertJsonPath('meta.current_page', 3)
-        ->assertJsonPath('meta.last_page', 3);
+    $url = "/api/jobs/{$this->job->id}/applications?stage={$this->stage->id}&per_page=10";
+    $seen = 0;
+    $cursor = null;
+
+    do {
+        $page = $this->getJson($cursor ? "{$url}&cursor={$cursor}" : $url)->assertOk();
+        $seen += count($page->json('data'));
+        $cursor = $page->json('meta.next_cursor');
+    } while ($cursor !== null);
+
+    expect($seen)->toBe(25);
 });

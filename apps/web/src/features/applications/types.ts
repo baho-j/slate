@@ -3,6 +3,22 @@ import type { Paginated } from '@/features/jobs/types'
 
 export type { Paginated }
 
+export interface CursorPaginated<T> {
+  data: T[]
+  links: {
+    first: string | null
+    last: string | null
+    prev: string | null
+    next: string | null
+  }
+  meta: {
+    path: string
+    per_page: number
+    next_cursor: string | null
+    prev_cursor: string | null
+  }
+}
+
 export type ApplicationStatus = 'applied' | 'in_review' | 'rejected' | 'withdrawn' | 'hired'
 
 export interface ApplicationStage {
@@ -59,8 +75,11 @@ export interface ApplicationDetail {
   status_history: ApplicationHistoryEntry[]
 }
 
+export type Eligibility = 'eligible' | 'ineligible' | 'manual'
+
 export interface ApplicationListParams {
   status?: ApplicationStatus
+  eligibility?: Eligibility
   q?: string
-  page?: number
+  cursor?: string
 }

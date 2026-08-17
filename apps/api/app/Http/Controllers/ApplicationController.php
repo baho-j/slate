@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Actions\MoveApplicationStage;
 use App\Enums\ApplicationStatus;
+use App\Enums\Eligibility;
 use App\Enums\UserRole;
 use App\Http\Requests\Applications\MoveApplicationStageRequest;
 use App\Http\Resources\ApplicationDetailResource;
@@ -27,6 +28,7 @@ class ApplicationController extends Controller
         $validated = $request->validate([
             'stage' => ['sometimes', 'integer'],
             'status' => ['sometimes', 'string', 'in:'.implode(',', array_column(ApplicationStatus::cases(), 'value'))],
+            'eligibility' => ['sometimes', 'string', 'in:'.implode(',', array_column(Eligibility::cases(), 'value'))],
             'q' => ['sometimes', 'string', 'max:255'],
             'per_page' => ['sometimes', 'integer', 'min:1', 'max:100'],
         ]);
@@ -35,14 +37,13 @@ class ApplicationController extends Controller
             ->with(['candidate', 'currentStage'])
             ->when($validated['stage'] ?? null, fn ($query, $stage) => $query->where('current_stage_id', $stage))
             ->when($validated['status'] ?? null, fn ($query, $status) => $query->where('status', $status))
-            ->when($validated['q'] ?? null, fn ($query, $term) => $query->whereHas(
-                'candidate',
-                fn ($candidate) => $candidate
-                    ->where('full_name', 'ilike', "%{$term}%")
-                    ->orWhere('email', 'ilike', "%{$term}%")
+            ->when($validated['eligibility'] ?? null, fn ($query, $eligibility) => $query->where('eligibility', $eligibility))
+            ->when($validated['q'] ?? null, fn ($query, $term) => $query->whereRaw(
+                "search_vector @@ plainto_tsquery('english', ?)", [$term]
             ))
-            ->latest()
-            ->paginate($validated['per_page'] ?? 20)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->cursorPaginate($validated['per_page'] ?? 20)
             ->withQueryString();
 
         return ApplicationResource::collection($applications);

@@ -12,35 +12,40 @@ import {
 } from '@/components/ui/select'
 import { useDebouncedValue } from '@/lib/use-debounced-value'
 import { ApplicationsTable } from './ApplicationsTable'
-import { statusFilterOptions } from './constants'
+import { eligibilityFilterOptions, statusFilterOptions } from './constants'
 import { useApplications } from './hooks'
-import type { ApplicationListParams, ApplicationStatus } from './types'
+import type { ApplicationStatus, Eligibility } from './types'
 
 const ALL_STATUSES = 'all'
+const ALL_ELIGIBILITY = 'all'
 
 export function ApplicationsPage({ jobId }: { jobId: string }) {
   const [search, setSearch] = useState('')
   const [status, setStatus] = useState<ApplicationStatus | typeof ALL_STATUSES>(ALL_STATUSES)
-  const [page, setPage] = useState(1)
+  const [eligibility, setEligibility] = useState<Eligibility | typeof ALL_ELIGIBILITY>(
+    ALL_ELIGIBILITY,
+  )
+  const [cursor, setCursor] = useState<string | undefined>()
   const debouncedSearch = useDebouncedValue(search.trim(), 250)
 
-  const params = useMemo<ApplicationListParams>(
+  const params = useMemo(
     () => ({
-      page,
+      ...(cursor ? { cursor } : {}),
       ...(debouncedSearch ? { q: debouncedSearch } : {}),
       ...(status !== ALL_STATUSES ? { status } : {}),
+      ...(eligibility !== ALL_ELIGIBILITY ? { eligibility } : {}),
     }),
-    [page, debouncedSearch, status],
+    [cursor, debouncedSearch, status, eligibility],
   )
 
   const { data, isLoading, isError } = useApplications(jobId, params)
   const applications = data?.data ?? []
   const meta = data?.meta
 
-  function resetToFirstPage<T>(setter: (value: T) => void) {
+  function onFilterChange<T>(setter: (value: T) => void) {
     return (value: T) => {
       setter(value)
-      setPage(1)
+      setCursor(undefined)
     }
   }
 
@@ -71,16 +76,16 @@ export function ApplicationsPage({ jobId }: { jobId: string }) {
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <Input
           type="search"
-          placeholder="Search by name or email…"
+          placeholder="Search by name, email, or answers…"
           aria-label="Search applications"
           value={search}
-          onChange={(event) => resetToFirstPage(setSearch)(event.target.value)}
+          onChange={(event) => onFilterChange(setSearch)(event.target.value)}
           className="sm:max-w-xs"
         />
         <Select
           value={status}
           onValueChange={(value) =>
-            resetToFirstPage(setStatus)(value as ApplicationStatus | typeof ALL_STATUSES)
+            onFilterChange(setStatus)(value as ApplicationStatus | typeof ALL_STATUSES)
           }
         >
           <SelectTrigger className="sm:w-44" aria-label="Filter by status">
@@ -89,6 +94,24 @@ export function ApplicationsPage({ jobId }: { jobId: string }) {
           <SelectContent>
             <SelectItem value={ALL_STATUSES}>All statuses</SelectItem>
             {statusFilterOptions.map(([value, label]) => (
+              <SelectItem key={value} value={value}>
+                {label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select
+          value={eligibility}
+          onValueChange={(value) =>
+            onFilterChange(setEligibility)(value as Eligibility | typeof ALL_ELIGIBILITY)
+          }
+        >
+          <SelectTrigger className="sm:w-44" aria-label="Filter by eligibility">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={ALL_ELIGIBILITY}>All eligibility</SelectItem>
+            {eligibilityFilterOptions.map(([value, label]) => (
               <SelectItem key={value} value={value}>
                 {label}
               </SelectItem>
@@ -107,29 +130,24 @@ export function ApplicationsPage({ jobId }: { jobId: string }) {
         )}
       </div>
 
-      {meta && meta.last_page > 1 && (
-        <nav className="flex items-center justify-between gap-3" aria-label="Pagination">
-          <p className="text-sm text-n-500">
-            Page {meta.current_page} of {meta.last_page} · {meta.total} total
-          </p>
-          <div className="flex gap-2">
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={meta.current_page <= 1}
-              onClick={() => setPage((current) => Math.max(1, current - 1))}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="secondary"
-              size="sm"
-              disabled={meta.current_page >= meta.last_page}
-              onClick={() => setPage((current) => current + 1)}
-            >
-              Next
-            </Button>
-          </div>
+      {meta && (meta.prev_cursor || meta.next_cursor) && (
+        <nav className="flex items-center justify-end gap-2" aria-label="Pagination">
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={!meta.prev_cursor}
+            onClick={() => setCursor(meta.prev_cursor ?? undefined)}
+          >
+            Previous
+          </Button>
+          <Button
+            variant="secondary"
+            size="sm"
+            disabled={!meta.next_cursor}
+            onClick={() => setCursor(meta.next_cursor ?? undefined)}
+          >
+            Next
+          </Button>
         </nav>
       )}
     </div>

@@ -136,6 +136,13 @@ describe('BoardPage', () => {
   })
 
   it('keeps the column totals consistent after a rollback', async () => {
+    fetchPipelineMock.mockResolvedValue(
+      makePipeline([
+        makeStage({ id: 1, name: 'Applied', order: 1, application_count: 1 }),
+        makeStage({ id: 2, name: 'Interview', order: 2, application_count: 0 }),
+        makeStage({ id: 3, name: 'Hired', order: 3, is_terminal: true }),
+      ]),
+    )
     seedColumns({ 1: [makeCard()] })
     moveStageMock.mockRejectedValue(new Error('nope'))
 
@@ -143,13 +150,13 @@ describe('BoardPage', () => {
     await boardReady()
     await screen.findByRole('article', { name: 'Grace Hopper' })
 
-    const appliedTotal = () => stageContents('Applied').getByText('1')
+    const appliedBadge = () => stageContents('Applied').getByText('1')
 
     await userEvent.click(screen.getByRole('button', { name: /Move Grace Hopper/ }))
     await userEvent.click(await screen.findByRole('menuitem', { name: 'Interview' }))
 
     await screen.findByText('Could not move the application. Put it back.')
-    await waitFor(() => expect(appliedTotal()).toBeInTheDocument())
+    await waitFor(() => expect(appliedBadge()).toBeInTheDocument())
   })
 
   it('moves a card on drop and does not offer its own stage as a target', async () => {
@@ -183,20 +190,31 @@ describe('BoardPage', () => {
     expect(stageContents('Hired').getByText('Nothing here yet.')).toBeInTheDocument()
   })
 
-  it('paginates a column without touching the others', async () => {
+  it('paginates a column with cursors without touching the others', async () => {
     fetchStageApplicationsMock.mockImplementation(
-      async (_job: string, stageId: number, page: number) =>
-        stageId === 1
+      async (_job: string, stageId: number, cursor: string | null) => {
+        if (stageId !== 1) return pageOf([])
+
+        return cursor === 'cursor-2'
           ? pageOf(
               [
                 makeCard({
-                  id: `app-page-${page}`,
-                  candidate: { full_name: `Page ${page}`, email: 'p@example.com' },
+                  id: 'app-page-2',
+                  candidate: { full_name: 'Page 2', email: 'p@x.com' },
                 }),
               ],
-              25,
+              { prev: 'cursor-1' },
             )
-          : pageOf([]),
+          : pageOf(
+              [
+                makeCard({
+                  id: 'app-page-1',
+                  candidate: { full_name: 'Page 1', email: 'p@x.com' },
+                }),
+              ],
+              { next: 'cursor-2' },
+            )
+      },
     )
 
     await renderBoard()
@@ -206,8 +224,11 @@ describe('BoardPage', () => {
     await userEvent.click(stageContents('Applied').getByRole('button', { name: 'Next' }))
 
     expect(await screen.findByText('Page 2')).toBeInTheDocument()
+    // The Interview column was never asked for a cursor page.
     expect(
-      fetchStageApplicationsMock.mock.calls.filter((call) => call[1] === 2 && call[2] === 2),
+      fetchStageApplicationsMock.mock.calls.filter(
+        (call) => call[1] === 2 && call[2] === 'cursor-2',
+      ),
     ).toHaveLength(0)
   })
 

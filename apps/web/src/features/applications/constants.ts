@@ -1,4 +1,4 @@
-import type { ApplicationStatus } from './types'
+import type { ApplicationStatus, Eligibility } from './types'
 
 export const statusLabels: Record<ApplicationStatus, string> = {
   applied: 'Applied',
@@ -20,3 +20,11 @@ export const statusVariants: Record<
 }
 
 export const statusFilterOptions = Object.entries(statusLabels) as [ApplicationStatus, string][]
+
+export const eligibilityLabels: Record<Eligibility, string> = {
+  eligible: 'Eligible',
+  ineligible: 'Ineligible',
+  manual: 'Manual review',
+}
+
+export const eligibilityFilterOptions = Object.entries(eligibilityLabels) as [Eligibility, string][]

@@ -3,7 +3,7 @@ import type {
   ApplicationDetail,
   ApplicationListItem,
   ApplicationListParams,
-  Paginated,
+  CursorPaginated,
 } from './types'
 
 interface DetailResponse {
@@ -13,8 +13,8 @@ interface DetailResponse {
 export async function fetchApplications(
   jobId: string,
   params: ApplicationListParams,
-): Promise<Paginated<ApplicationListItem>> {
-  const { data } = await apiClient.get<Paginated<ApplicationListItem>>(
+): Promise<CursorPaginated<ApplicationListItem>> {
+  const { data } = await apiClient.get<CursorPaginated<ApplicationListItem>>(
     `/jobs/${jobId}/applications`,
     { params },
   )

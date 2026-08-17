@@ -10,7 +10,7 @@ import { render, screen } from '@testing-library/react'
 import { ToastRoot } from '@/components/ui/toast-context'
 import { ApplicationDetailPage } from './ApplicationDetailPage'
 import { ApplicationsPage } from './ApplicationsPage'
-import type { ApplicationDetail, ApplicationListItem, Paginated } from './types'
+import type { ApplicationDetail, ApplicationListItem, CursorPaginated } from './types'
 
 export function makeListItem(overrides: Partial<ApplicationListItem> = {}): ApplicationListItem {
   return {
@@ -58,17 +58,23 @@ export function makeDetail(overrides: Partial<ApplicationDetail> = {}): Applicat
   }
 }
 
-export function page<T>(items: T[], meta: Partial<Paginated<T>['meta']> = {}): Paginated<T> {
+export function page<T>(
+  items: T[],
+  meta: Partial<CursorPaginated<T>['meta']> = {},
+): CursorPaginated<T> {
   return {
     data: items,
-    links: { first: null, last: null, prev: null, next: null },
+    links: {
+      first: null,
+      last: null,
+      prev: meta.prev_cursor ?? null,
+      next: meta.next_cursor ?? null,
+    },
     meta: {
-      current_page: 1,
-      from: 1,
-      last_page: 1,
+      path: 'http://localhost/api/jobs/job-1/applications',
       per_page: 20,
-      to: items.length,
-      total: items.length,
+      next_cursor: null,
+      prev_cursor: null,
       ...meta,
     },
   }

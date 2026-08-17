@@ -29,9 +29,9 @@ export function StageColumn({
   onDropInto,
   onMoveCard,
 }: StageColumnProps) {
-  const [page, setPage] = useState(1)
+  const [cursor, setCursor] = useState<string | null>(null)
   const [isOver, setIsOver] = useState(false)
-  const { data, isLoading, isError } = useStageColumn(jobId, stage.id, page)
+  const { data, isLoading, isError } = useStageColumn(jobId, stage.id, cursor)
 
   const applications = data?.data ?? []
   const meta = data?.meta
@@ -59,7 +59,7 @@ export function StageColumn({
       <header className="flex items-center justify-between gap-2 border-b border-n-200 px-3 py-2">
         <h2 className="truncate text-sm font-semibold text-n-900">{stage.name}</h2>
         <span className="shrink-0 rounded-xs bg-n-200 px-1.5 py-0.5 text-xs text-n-600">
-          {meta?.total ?? stage.application_count}
+          {stage.application_count}
         </span>
       </header>
 
@@ -92,7 +92,7 @@ export function StageColumn({
         )}
       </div>
 
-      {meta && meta.last_page > 1 && (
+      {meta && (meta.prev_cursor || meta.next_cursor) && (
         <nav
           aria-label={`${stage.name} pagination`}
           className="flex items-center justify-between gap-2 border-t border-n-200 px-2 py-1.5"
@@ -100,19 +100,16 @@ export function StageColumn({
           <Button
             variant="ghost"
             size="sm"
-            disabled={meta.current_page <= 1}
-            onClick={() => setPage((current) => Math.max(1, current - 1))}
+            disabled={!meta.prev_cursor}
+            onClick={() => setCursor(meta.prev_cursor)}
           >
             Previous
           </Button>
-          <span className="text-xs text-n-500">
-            {meta.current_page} / {meta.last_page}
-          </span>
           <Button
             variant="ghost"
             size="sm"
-            disabled={meta.current_page >= meta.last_page}
-            onClick={() => setPage((current) => current + 1)}
+            disabled={!meta.next_cursor}
+            onClick={() => setCursor(meta.next_cursor)}
           >
             Next
           </Button>

@@ -6,7 +6,7 @@ import type {
   ApplicationListItem,
   ApplicationListParams,
   ApplicationStage,
-  Paginated,
+  CursorPaginated,
 } from './types'
 
 export const applicationKeys = {
@@ -17,7 +17,7 @@ export const applicationKeys = {
 }
 
 export function useApplications(jobId: string, params: ApplicationListParams) {
-  return useQuery<Paginated<ApplicationListItem>, AxiosError>({
+  return useQuery<CursorPaginated<ApplicationListItem>, AxiosError>({
     queryKey: applicationKeys.listFor(jobId, params),
     queryFn: () => fetchApplications(jobId, params),
     placeholderData: keepPreviousData,

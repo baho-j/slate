@@ -3,10 +3,13 @@ import { useEffect } from 'react'
 interface DocumentMeta {
   title: string
   description?: string
+  enabled?: boolean
 }
 
-export function useDocumentMeta({ title, description }: DocumentMeta) {
+export function useDocumentMeta({ title, description, enabled = true }: DocumentMeta) {
   useEffect(() => {
+    if (!enabled) return
+
     const previousTitle = document.title
     document.title = title
 
@@ -30,5 +33,5 @@ export function useDocumentMeta({ title, description }: DocumentMeta) {
         meta.content = previousDescription
       }
     }
-  }, [title, description])
+  }, [title, description, enabled])
 }

@@ -62,9 +62,25 @@ export async function renderCareers(initialPath: string) {
       return <JobDetailPage orgSlug={orgSlug} jobId={jobId} />
     },
   })
+  const embedListRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/embed/o/$orgSlug',
+    component: () => {
+      const { orgSlug } = embedListRoute.useParams()
+      return <CareersListPage orgSlug={orgSlug} embedded />
+    },
+  })
+  const embedDetailRoute = createRoute({
+    getParentRoute: () => rootRoute,
+    path: '/embed/o/$orgSlug/jobs/$jobId',
+    component: () => {
+      const { orgSlug, jobId } = embedDetailRoute.useParams()
+      return <JobDetailPage orgSlug={orgSlug} jobId={jobId} embedded />
+    },
+  })
 
   const router = createRouter({
-    routeTree: rootRoute.addChildren([listRoute, detailRoute]),
+    routeTree: rootRoute.addChildren([listRoute, detailRoute, embedListRoute, embedDetailRoute]),
     history: createMemoryHistory({ initialEntries: [initialPath] }),
   })
 

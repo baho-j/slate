@@ -7,18 +7,27 @@ import { formatSalaryRange } from './format'
 import { usePublicJob, usePublicOrganization } from './hooks'
 import { useDocumentMeta } from './useDocumentMeta'
 
-export function JobDetailPage({ orgSlug, jobId }: { orgSlug: string; jobId: string }) {
+export function JobDetailPage({
+  orgSlug,
+  jobId,
+  embedded = false,
+}: {
+  orgSlug: string
+  jobId: string
+  embedded?: boolean
+}) {
   const org = usePublicOrganization(orgSlug)
   const { data: job, isLoading, isError } = usePublicJob(orgSlug, jobId)
 
   useDocumentMeta({
     title: job && org.data ? `${job.title} · ${org.data.name}` : 'Careers',
     description: job ? job.description.slice(0, 160) : undefined,
+    enabled: !embedded,
   })
 
   const backLink = (
     <Link
-      to="/o/$orgSlug"
+      to={embedded ? '/embed/o/$orgSlug' : '/o/$orgSlug'}
       params={{ orgSlug }}
       className="inline-flex items-center gap-1 text-sm text-accent hover:text-accent-hover"
     >
@@ -29,7 +38,7 @@ export function JobDetailPage({ orgSlug, jobId }: { orgSlug: string; jobId: stri
 
   if (isError) {
     return (
-      <CareersShell organization={org.data}>
+      <CareersShell organization={org.data} embedded={embedded}>
         <div className="space-y-6">
           {backLink}
           <p role="alert" className="py-16 text-center text-n-500">
@@ -42,7 +51,7 @@ export function JobDetailPage({ orgSlug, jobId }: { orgSlug: string; jobId: stri
 
   if (isLoading || !job) {
     return (
-      <CareersShell organization={org.data}>
+      <CareersShell organization={org.data} embedded={embedded}>
         <p className="py-16 text-center text-n-500">Loading…</p>
       </CareersShell>
     )
@@ -51,7 +60,7 @@ export function JobDetailPage({ orgSlug, jobId }: { orgSlug: string; jobId: stri
   const salary = formatSalaryRange(job)
 
   return (
-    <CareersShell organization={org.data}>
+    <CareersShell organization={org.data} embedded={embedded}>
       <article className="space-y-6">
         {backLink}
 

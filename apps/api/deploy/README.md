@@ -16,6 +16,24 @@ The SPA and API are on separate hosts, so auth uses Sanctum personal access toke
 instead of cookies: login returns a bearer token, the SPA stores it and sends
 `Authorization: Bearer`, and CORS (`FRONTEND_URL`) allows the SPA origin.
 
+## Framing policy (clickjacking)
+
+The authenticated app must **never** be frameable; only the public `/embed/*` careers widget is.
+Two layers enforce this:
+
+1. **Runtime (host-independent):** `FrameGuard` in the SPA refuses to render anywhere except
+   `/embed/*` when `window.self !== window.top`. This holds on any host, including the current
+   Blob static-website + CDN setup where per-route response headers aren't set by an origin nginx.
+2. **Response headers:** `apps/web/public/staticwebapp.config.json` declares the header policy —
+   `Content-Security-Policy: frame-ancestors 'none'` + `X-Frame-Options: DENY` globally, relaxed
+   to `frame-ancestors *` (and no XFO) for `/embed/*`. Azure Static Web Apps honours this file
+   directly; on Blob + CDN, mirror it as a CDN/Front Door **rules-engine** rule (match path
+   `/embed/*` → set the embed headers, else the deny headers), since Blob static hosting can't set
+   per-route headers itself.
+
+If the widget should be locked to specific customer domains, replace the embed
+`frame-ancestors *` with an explicit space-separated origin allowlist.
+
 ## App Service specifics
 
 - `startup.sh` is the App Service startup command. It repoints the built-in nginx document root

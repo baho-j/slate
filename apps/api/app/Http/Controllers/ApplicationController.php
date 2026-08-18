@@ -84,6 +84,7 @@ class ApplicationController extends Controller
 
         if ($user->isSuperAdmin() || $user->hasRole(UserRole::HrManager, UserRole::Recruiter)) {
             $relations[] = 'interviews.evaluation.author';
+            $relations[] = 'candidate.talentPoolEntry';
         }
 
         return $relations;

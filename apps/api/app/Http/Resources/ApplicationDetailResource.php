@@ -25,10 +25,21 @@ class ApplicationDetailResource extends JsonResource
             'cover_note' => $this->cover_note,
             'created_at' => $this->created_at?->toIso8601String(),
             'candidate' => [
+                'id' => $this->candidate->id,
                 'full_name' => $this->candidate->full_name,
                 'email' => $this->candidate->email,
                 'phone' => $this->candidate->phone,
             ],
+            'talent_pool' => $this->whenLoaded(
+                'candidate',
+                fn () => $this->candidate->relationLoaded('talentPoolEntry') && $this->candidate->talentPoolEntry
+                    ? [
+                        'id' => $this->candidate->talentPoolEntry->id,
+                        'tags' => $this->candidate->talentPoolEntry->tags,
+                        'note' => $this->candidate->talentPoolEntry->note,
+                    ]
+                    : null
+            ),
             'current_stage' => $this->currentStage ? [
                 'id' => $this->currentStage->id,
                 'name' => $this->currentStage->name,

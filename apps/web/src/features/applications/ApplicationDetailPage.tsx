@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { useToast } from '@/components/ui/toast-context'
 import { InterviewsPanel } from '@/features/interviews/InterviewsPanel'
+import { TalentPoolPanel } from '@/features/talent-pool/TalentPoolPanel'
 import { ApplicationStatusBadge } from './ApplicationStatusBadge'
 import { fetchCvDownloadUrl } from './api'
 import { useApplication } from './hooks'
@@ -100,6 +101,13 @@ export function ApplicationDetailPage({
       )}
 
       <InterviewsPanel applicationId={application.id} interviews={application.interviews ?? []} />
+
+      <TalentPoolPanel
+        applicationId={application.id}
+        candidateId={application.candidate.id}
+        candidateName={application.candidate.full_name}
+        entry={application.talent_pool}
+      />
 
       <section className="space-y-2">
         <h2 className="text-sm font-medium text-n-700">Status history</h2>

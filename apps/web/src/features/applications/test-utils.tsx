@@ -33,7 +33,13 @@ export function makeDetail(overrides: Partial<ApplicationDetail> = {}): Applicat
     match_score: null,
     cover_note: 'I would love to join.',
     created_at: '2026-07-30T00:00:00+00:00',
-    candidate: { full_name: 'Grace Hopper', email: 'grace@example.com', phone: '+123' },
+    candidate: {
+      id: 'cand-1',
+      full_name: 'Grace Hopper',
+      email: 'grace@example.com',
+      phone: '+123',
+    },
+    talent_pool: null,
     current_stage: { id: 1, name: 'Applied' },
     available_stages: [
       { id: 1, name: 'Applied' },

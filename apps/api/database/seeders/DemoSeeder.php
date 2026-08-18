@@ -17,6 +17,7 @@ use App\Models\Job;
 use App\Models\Organization;
 use App\Models\PipelineStage;
 use App\Models\ScreeningCriterion;
+use App\Models\TalentPoolEntry;
 use App\Models\User;
 use App\Services\Criteria\CriteriaEvaluator;
 use Illuminate\Database\Seeder;
@@ -45,6 +46,28 @@ class DemoSeeder extends Seeder
         $this->jobWithFields($acme, $hana, 'Product Designer', 'Design');
 
         $this->interviews($engineering, $ivan, $remy);
+        $this->talentPool($engineering, $remy);
+    }
+
+    private function talentPool(Job $job, User $addedBy): void
+    {
+        if (TalentPoolEntry::withoutGlobalScopes()->where('organization_id', $job->organization_id)->exists()) {
+            return;
+        }
+
+        $tagSets = [['senior', 'backend'], ['frontend', 'remote'], ['design']];
+
+        $job->applications()->withoutGlobalScopes()->take(3)->get()
+            ->each(function ($application, $index) use ($job, $addedBy, $tagSets) {
+                $entry = TalentPoolEntry::make([
+                    'candidate_id' => $application->candidate_id,
+                    'tags' => $tagSets[$index % count($tagSets)],
+                    'note' => 'Strong candidate worth keeping for future roles.',
+                    'added_by' => $addedBy->id,
+                ]);
+                $entry->organization_id = $job->organization_id;
+                $entry->save();
+            });
     }
 
     private function interviews(Job $job, User $interviewer, User $scheduledBy): void

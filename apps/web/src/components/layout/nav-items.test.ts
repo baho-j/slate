@@ -6,9 +6,9 @@ const roles: UserRole[] = ['super_admin', 'hr_manager', 'recruiter', 'interviewe
 
 describe('navItemsFor', () => {
   it.each([
-    ['super_admin', ['Dashboard', 'Jobs', 'Candidates', 'Interviews', 'Settings']],
-    ['hr_manager', ['Dashboard', 'Jobs', 'Candidates', 'Interviews', 'Settings']],
-    ['recruiter', ['Dashboard', 'Jobs', 'Candidates', 'Interviews']],
+    ['super_admin', ['Dashboard', 'Jobs', 'Talent pool', 'Interviews', 'Settings']],
+    ['hr_manager', ['Dashboard', 'Jobs', 'Talent pool', 'Interviews', 'Settings']],
+    ['recruiter', ['Dashboard', 'Jobs', 'Talent pool', 'Interviews']],
     ['interviewer', ['Dashboard', 'Interviews']],
     ['candidate', ['My Applications']],
   ] as const)('gives %s exactly the expected sections', (role, expected) => {

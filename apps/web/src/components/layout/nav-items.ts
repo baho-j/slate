@@ -14,7 +14,7 @@ const staff = ['super_admin', 'hr_manager', 'recruiter'] as const
 export const navItems: NavItem[] = [
   { label: 'Dashboard', to: '/', icon: LayoutDashboard, roles: [...staff, 'interviewer'] },
   { label: 'Jobs', to: '/jobs', icon: Briefcase, roles: staff },
-  { label: 'Candidates', to: '/candidates', icon: Users, roles: staff },
+  { label: 'Talent pool', to: '/candidates', icon: Users, roles: staff },
   {
     label: 'Interviews',
     to: '/interviews',

@@ -10,11 +10,14 @@ use App\Http\Controllers\InterviewController;
 use App\Http\Controllers\InterviewerController;
 use App\Http\Controllers\InterviewEvaluationController;
 use App\Http\Controllers\JobController;
+use App\Http\Controllers\LogoUploadController;
+use App\Http\Controllers\OrganizationController;
 use App\Http\Controllers\PipelineController;
 use App\Http\Controllers\PublicApplicationController;
 use App\Http\Controllers\PublicCareersController;
 use App\Http\Controllers\ScreeningCriterionController;
 use App\Http\Controllers\TalentPoolController;
+use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/health', HealthController::class);
@@ -34,6 +37,10 @@ Route::middleware('throttle:public')->prefix('public')->group(function () {
     Route::get('/uploads/cv/{key}', [CvUploadController::class, 'download'])
         ->where('key', 'cv/.*')
         ->name('applications.cv.download');
+
+    Route::put('/uploads/logo/{key}', [LogoUploadController::class, 'put'])
+        ->where('key', 'logos/.*')
+        ->name('public.uploads.logo.put');
 });
 
 Route::middleware('auth:sanctum')->group(function () {
@@ -60,6 +67,15 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::post('/applications/{application}/interviews', [InterviewController::class, 'store']);
     Route::patch('/interviews/{interview}', [InterviewController::class, 'update']);
     Route::post('/interviews/{interview}/evaluation', [InterviewEvaluationController::class, 'store']);
+
+    Route::get('/organizations/current', [OrganizationController::class, 'current']);
+    Route::patch('/organizations/current', [OrganizationController::class, 'update']);
+    Route::post('/uploads/logo', [LogoUploadController::class, 'store']);
+
+    Route::get('/users', [UserManagementController::class, 'index']);
+    Route::post('/users', [UserManagementController::class, 'store']);
+    Route::patch('/users/{user}', [UserManagementController::class, 'update']);
+    Route::delete('/users/{user}', [UserManagementController::class, 'destroy']);
 
     Route::get('/analytics/overview', [AnalyticsController::class, 'overview']);
     Route::get('/analytics/jobs/{job}', [AnalyticsController::class, 'job']);

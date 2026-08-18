@@ -3,10 +3,21 @@ import type { PublicOrganization } from './types'
 
 interface CareersShellProps {
   organization?: PublicOrganization
+  embedded?: boolean
   children: ReactNode
 }
 
-export function CareersShell({ organization, children }: CareersShellProps) {
+export function CareersShell({ organization, embedded = false, children }: CareersShellProps) {
+  // Embedded, the widget is chrome-free so it sits inside the host page's own layout:
+  // no org header, transparent background, tighter padding.
+  if (embedded) {
+    return (
+      <div className="text-n-900">
+        <main className="mx-auto max-w-3xl px-4 py-4">{children}</main>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-n-50 text-n-900">
       <header className="border-b border-n-200 bg-white">

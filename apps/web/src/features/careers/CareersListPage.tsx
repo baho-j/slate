@@ -10,7 +10,13 @@ import { usePublicJobs, usePublicOrganization } from './hooks'
 import type { PublicJob, PublicJobListParams } from './types'
 import { useDocumentMeta } from './useDocumentMeta'
 
-export function CareersListPage({ orgSlug }: { orgSlug: string }) {
+export function CareersListPage({
+  orgSlug,
+  embedded = false,
+}: {
+  orgSlug: string
+  embedded?: boolean
+}) {
   const [search, setSearch] = useState('')
   const [page, setPage] = useState(1)
   const debouncedSearch = useDebouncedValue(search.trim(), 250)
@@ -30,7 +36,7 @@ export function CareersListPage({ orgSlug }: { orgSlug: string }) {
 
   if (org.isError) {
     return (
-      <CareersShell>
+      <CareersShell embedded={embedded}>
         <p role="alert" className="py-16 text-center text-n-500">
           This careers page could not be found.
         </p>
@@ -42,7 +48,7 @@ export function CareersListPage({ orgSlug }: { orgSlug: string }) {
   const meta = data?.meta
 
   return (
-    <CareersShell organization={org.data}>
+    <CareersShell organization={org.data} embedded={embedded}>
       <div className="space-y-6">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight">Open roles</h1>
@@ -73,7 +79,7 @@ export function CareersListPage({ orgSlug }: { orgSlug: string }) {
           <ul className="space-y-3">
             {jobs.map((job) => (
               <li key={job.id}>
-                <JobCard orgSlug={orgSlug} job={job} />
+                <JobCard orgSlug={orgSlug} job={job} embedded={embedded} />
               </li>
             ))}
           </ul>
@@ -109,12 +115,20 @@ export function CareersListPage({ orgSlug }: { orgSlug: string }) {
   )
 }
 
-function JobCard({ orgSlug, job }: { orgSlug: string; job: PublicJob }) {
+function JobCard({
+  orgSlug,
+  job,
+  embedded,
+}: {
+  orgSlug: string
+  job: PublicJob
+  embedded: boolean
+}) {
   const salary = formatSalaryRange(job)
 
   return (
     <Link
-      to="/o/$orgSlug/jobs/$jobId"
+      to={embedded ? '/embed/o/$orgSlug/jobs/$jobId' : '/o/$orgSlug/jobs/$jobId'}
       params={{ orgSlug, jobId: job.id }}
       className="block rounded-lg border border-n-200 bg-white p-4 transition-colors hover:border-accent"
     >

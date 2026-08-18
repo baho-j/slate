@@ -21,9 +21,11 @@ import { Route as AppJobsIndexRouteImport } from './routes/_app.jobs.index'
 import { Route as OOrgSlugIndexRouteImport } from './routes/o.$orgSlug.index'
 import { Route as AppJobsJobIdBoardRouteImport } from './routes/_app.jobs.$jobId.board'
 import { Route as AppJobsJobIdFormRouteImport } from './routes/_app.jobs.$jobId.form'
+import { Route as EmbedOOrgSlugIndexRouteImport } from './routes/embed.o.$orgSlug.index'
 import { Route as OOrgSlugJobsJobIdRouteImport } from './routes/o.$orgSlug.jobs.$jobId'
 import { Route as AppJobsJobIdApplicationsIndexRouteImport } from './routes/_app.jobs.$jobId.applications.index'
 import { Route as AppJobsJobIdApplicationsApplicationIdRouteImport } from './routes/_app.jobs.$jobId.applications.$applicationId'
+import { Route as EmbedOOrgSlugJobsJobIdRouteImport } from './routes/embed.o.$orgSlug.jobs.$jobId'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -84,6 +86,11 @@ const AppJobsJobIdFormRoute = AppJobsJobIdFormRouteImport.update({
   path: '/$jobId/form',
   getParentRoute: () => AppJobsRoute,
 } as any)
+const EmbedOOrgSlugIndexRoute = EmbedOOrgSlugIndexRouteImport.update({
+  id: '/embed/o/$orgSlug/',
+  path: '/embed/o/$orgSlug/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const OOrgSlugJobsJobIdRoute = OOrgSlugJobsJobIdRouteImport.update({
   id: '/o/$orgSlug/jobs/$jobId',
   path: '/o/$orgSlug/jobs/$jobId',
@@ -101,6 +108,11 @@ const AppJobsJobIdApplicationsApplicationIdRoute =
     path: '/$jobId/applications/$applicationId',
     getParentRoute: () => AppJobsRoute,
   } as any)
+const EmbedOOrgSlugJobsJobIdRoute = EmbedOOrgSlugJobsJobIdRouteImport.update({
+  id: '/embed/o/$orgSlug/jobs/$jobId',
+  path: '/embed/o/$orgSlug/jobs/$jobId',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -115,7 +127,9 @@ export interface FileRoutesByFullPath {
   '/jobs/$jobId/board': typeof AppJobsJobIdBoardRoute
   '/jobs/$jobId/form': typeof AppJobsJobIdFormRoute
   '/o/$orgSlug/jobs/$jobId': typeof OOrgSlugJobsJobIdRoute
+  '/embed/o/$orgSlug/': typeof EmbedOOrgSlugIndexRoute
   '/jobs/$jobId/applications/$applicationId': typeof AppJobsJobIdApplicationsApplicationIdRoute
+  '/embed/o/$orgSlug/jobs/$jobId': typeof EmbedOOrgSlugJobsJobIdRoute
   '/jobs/$jobId/applications/': typeof AppJobsJobIdApplicationsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -130,7 +144,9 @@ export interface FileRoutesByTo {
   '/jobs/$jobId/board': typeof AppJobsJobIdBoardRoute
   '/jobs/$jobId/form': typeof AppJobsJobIdFormRoute
   '/o/$orgSlug/jobs/$jobId': typeof OOrgSlugJobsJobIdRoute
+  '/embed/o/$orgSlug': typeof EmbedOOrgSlugIndexRoute
   '/jobs/$jobId/applications/$applicationId': typeof AppJobsJobIdApplicationsApplicationIdRoute
+  '/embed/o/$orgSlug/jobs/$jobId': typeof EmbedOOrgSlugJobsJobIdRoute
   '/jobs/$jobId/applications': typeof AppJobsJobIdApplicationsIndexRoute
 }
 export interface FileRoutesById {
@@ -148,7 +164,9 @@ export interface FileRoutesById {
   '/_app/jobs/$jobId/board': typeof AppJobsJobIdBoardRoute
   '/_app/jobs/$jobId/form': typeof AppJobsJobIdFormRoute
   '/o/$orgSlug/jobs/$jobId': typeof OOrgSlugJobsJobIdRoute
+  '/embed/o/$orgSlug/': typeof EmbedOOrgSlugIndexRoute
   '/_app/jobs/$jobId/applications/$applicationId': typeof AppJobsJobIdApplicationsApplicationIdRoute
+  '/embed/o/$orgSlug/jobs/$jobId': typeof EmbedOOrgSlugJobsJobIdRoute
   '/_app/jobs/$jobId/applications/': typeof AppJobsJobIdApplicationsIndexRoute
 }
 export interface FileRouteTypes {
@@ -166,7 +184,9 @@ export interface FileRouteTypes {
     | '/jobs/$jobId/board'
     | '/jobs/$jobId/form'
     | '/o/$orgSlug/jobs/$jobId'
+    | '/embed/o/$orgSlug/'
     | '/jobs/$jobId/applications/$applicationId'
+    | '/embed/o/$orgSlug/jobs/$jobId'
     | '/jobs/$jobId/applications/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -181,7 +201,9 @@ export interface FileRouteTypes {
     | '/jobs/$jobId/board'
     | '/jobs/$jobId/form'
     | '/o/$orgSlug/jobs/$jobId'
+    | '/embed/o/$orgSlug'
     | '/jobs/$jobId/applications/$applicationId'
+    | '/embed/o/$orgSlug/jobs/$jobId'
     | '/jobs/$jobId/applications'
   id:
     | '__root__'
@@ -198,7 +220,9 @@ export interface FileRouteTypes {
     | '/_app/jobs/$jobId/board'
     | '/_app/jobs/$jobId/form'
     | '/o/$orgSlug/jobs/$jobId'
+    | '/embed/o/$orgSlug/'
     | '/_app/jobs/$jobId/applications/$applicationId'
+    | '/embed/o/$orgSlug/jobs/$jobId'
     | '/_app/jobs/$jobId/applications/'
   fileRoutesById: FileRoutesById
 }
@@ -207,6 +231,8 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OOrgSlugIndexRoute: typeof OOrgSlugIndexRoute
   OOrgSlugJobsJobIdRoute: typeof OOrgSlugJobsJobIdRoute
+  EmbedOOrgSlugIndexRoute: typeof EmbedOOrgSlugIndexRoute
+  EmbedOOrgSlugJobsJobIdRoute: typeof EmbedOOrgSlugJobsJobIdRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -295,6 +321,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppJobsJobIdFormRouteImport
       parentRoute: typeof AppJobsRoute
     }
+    '/embed/o/$orgSlug/': {
+      id: '/embed/o/$orgSlug/'
+      path: '/embed/o/$orgSlug'
+      fullPath: '/embed/o/$orgSlug/'
+      preLoaderRoute: typeof EmbedOOrgSlugIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/o/$orgSlug/jobs/$jobId': {
       id: '/o/$orgSlug/jobs/$jobId'
       path: '/o/$orgSlug/jobs/$jobId'
@@ -315,6 +348,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/jobs/$jobId/applications/$applicationId'
       preLoaderRoute: typeof AppJobsJobIdApplicationsApplicationIdRouteImport
       parentRoute: typeof AppJobsRoute
+    }
+    '/embed/o/$orgSlug/jobs/$jobId': {
+      id: '/embed/o/$orgSlug/jobs/$jobId'
+      path: '/embed/o/$orgSlug/jobs/$jobId'
+      fullPath: '/embed/o/$orgSlug/jobs/$jobId'
+      preLoaderRoute: typeof EmbedOOrgSlugJobsJobIdRouteImport
+      parentRoute: typeof rootRouteImport
     }
   }
 }
@@ -364,6 +404,8 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OOrgSlugIndexRoute: OOrgSlugIndexRoute,
   OOrgSlugJobsJobIdRoute: OOrgSlugJobsJobIdRoute,
+  EmbedOOrgSlugIndexRoute: EmbedOOrgSlugIndexRoute,
+  EmbedOOrgSlugJobsJobIdRoute: EmbedOOrgSlugJobsJobIdRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

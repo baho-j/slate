@@ -23,6 +23,15 @@ class JobPolicy
         return $user->organization_id === $job->organization_id;
     }
 
+    public function viewAnalytics(User $user, ?Job $job = null): bool
+    {
+        if (! $user->hasRole(UserRole::HrManager, UserRole::Recruiter)) {
+            return false;
+        }
+
+        return $job === null || $user->organization_id === $job->organization_id;
+    }
+
     public function create(User $user): bool
     {
         return $user->hasRole(UserRole::HrManager, UserRole::Recruiter);

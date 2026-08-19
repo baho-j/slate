@@ -15,12 +15,13 @@ class JobPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->organization_id !== null;
+        return $user->hasRole(UserRole::HrManager, UserRole::Recruiter);
     }
 
     public function view(User $user, Job $job): bool
     {
-        return $user->organization_id === $job->organization_id;
+        return $user->hasRole(UserRole::HrManager, UserRole::Recruiter)
+            && $user->organization_id === $job->organization_id;
     }
 
     public function viewAnalytics(User $user, ?Job $job = null): bool

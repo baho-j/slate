@@ -125,14 +125,22 @@ test('an interviewer cannot create a job', function () {
         ->assertForbidden();
 });
 
-test('any org member can view a job', function () {
+test('a recruiter can view a job in their org', function () {
+    $job = Job::factory()->for($this->acme)->create();
+
+    $this->actingAs($this->recruiter)
+        ->getJson("/api/jobs/{$job->id}")
+        ->assertOk()
+        ->assertJsonPath('data.id', $job->id);
+});
+
+test('an interviewer cannot view a job — jobs are a recruiter+ surface', function () {
     $job = Job::factory()->for($this->acme)->create();
     $interviewer = User::factory()->for($this->acme)->role(UserRole::Interviewer)->create();
 
     $this->actingAs($interviewer)
         ->getJson("/api/jobs/{$job->id}")
-        ->assertOk()
-        ->assertJsonPath('data.id', $job->id);
+        ->assertForbidden();
 });
 
 test('viewing a job from another org returns 404, not 403', function () {

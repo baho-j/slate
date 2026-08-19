@@ -36,12 +36,19 @@ test('under-privileged org members may not create, update or delete', function (
         ->and($user->can('delete', $this->job))->toBeFalse();
 })->with('non-managing roles');
 
-test('any authed org member may view jobs in their org', function (UserRole $role) {
+test('recruiter+ may view jobs in their org', function (UserRole $role) {
     $user = User::factory()->for($this->acme)->role($role)->create();
 
     expect($user->can('viewAny', Job::class))->toBeTrue()
         ->and($user->can('view', $this->job))->toBeTrue();
-})->with('managing roles')->with('non-managing roles');
+})->with('managing roles');
+
+test('an interviewer may not list or view jobs — they reach applications via their interview list', function () {
+    $interviewer = User::factory()->for($this->acme)->role(UserRole::Interviewer)->create();
+
+    expect($interviewer->can('viewAny', Job::class))->toBeFalse()
+        ->and($interviewer->can('view', $this->job))->toBeFalse();
+});
 
 test('a recruiter from another org may not touch this org jobs', function () {
     $outsider = User::factory()->for($this->globex)->role(UserRole::Recruiter)->create();

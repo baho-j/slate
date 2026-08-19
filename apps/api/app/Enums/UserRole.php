@@ -14,4 +14,15 @@ enum UserRole: string
     {
         return in_array($this, [self::HrManager, self::Recruiter, self::Interviewer], true);
     }
+
+    /**
+     * Roles an hr_manager may assign. `super_admin` is deliberately excluded — an
+     * hr_manager must never be able to mint or escalate to a super admin.
+     *
+     * @return array<int, self>
+     */
+    public static function assignable(): array
+    {
+        return [self::HrManager, self::Recruiter, self::Interviewer, self::Candidate];
+    }
 }

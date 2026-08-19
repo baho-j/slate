@@ -61,6 +61,24 @@ return [
                 'report' => false,
             ],
 
+        // Org logos are shown on the public careers header, so this disk is publicly readable.
+        'logo' => env('LOGO_DISK', 'local') === 'azure'
+            ? [
+                'driver' => 'azure-storage-blob',
+                'connection_string' => env('AZURE_STORAGE_CONNECTION_STRING'),
+                'container' => env('AZURE_LOGO_CONTAINER', 'logos'),
+                'url' => env('AZURE_LOGO_URL'),
+                'throw' => true,
+            ]
+            : [
+                'driver' => 'local',
+                'root' => storage_path('app/public'),
+                'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
+                'visibility' => 'public',
+                'throw' => true,
+                'report' => false,
+            ],
+
     ],
 
     /*

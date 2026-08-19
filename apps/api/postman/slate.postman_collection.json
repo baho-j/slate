@@ -88,6 +88,10 @@
     {
       "key": "talentPoolEntryId",
       "value": ""
+    },
+    {
+      "key": "managedUserId",
+      "value": ""
     }
   ],
   "item": [
@@ -2565,6 +2569,247 @@
               "raw": "{{baseUrl}}/api/talent-pool/{{talentPoolEntryId}}",
               "host": ["{{baseUrl}}"],
               "path": ["api", "talent-pool", "{{talentPoolEntryId}}"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('204', () => pm.response.to.have.status(204))"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Org & users",
+      "item": [
+        {
+          "name": "GET /api/organizations/current",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/organizations/current",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "organizations", "current"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "pm.test('the profile carries the org fields', () => {",
+                  "    const org = pm.response.json().data",
+                  "    pm.expect(org).to.have.property('slug')",
+                  "    pm.expect(org).to.have.property('website')",
+                  "})"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /api/organizations/current",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/organizations/current",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "organizations", "current"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"description\":\"Contract-tested description.\",\"website\":\"https://acme.example\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "pm.test('the change is persisted', () => pm.expect(pm.response.json().data.website).to.eql('https://acme.example'))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "GET /api/users",
+          "request": {
+            "method": "GET",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "pm.test('every listed user is in this org', () => {",
+                  "    const orgId = pm.response.json().data[0].organization_id",
+                  "    pm.response.json().data.forEach(u => pm.expect(u.organization_id).to.eql(orgId))",
+                  "})"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/users (invite)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Contract Invitee\",\"email\":\"invitee+{{$timestamp}}@acme.test\",\"role\":\"recruiter\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('201', () => pm.response.to.have.status(201))",
+                  "const user = pm.response.json().data",
+                  "pm.collectionVariables.set('managedUserId', user.id)",
+                  "pm.test('the invitee joins this org as a recruiter', () => {",
+                  "    pm.expect(user.role).to.eql('recruiter')",
+                  "})"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "POST /api/users (super_admin rejected)",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"name\":\"Escalate\",\"email\":\"escalate+{{$timestamp}}@acme.test\",\"role\":\"super_admin\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422 - an hr_manager cannot mint a super_admin', () => pm.response.to.have.status(422))",
+                  "pm.test('the role is the rejected field', () => pm.expect(pm.response.json().errors).to.have.property('role'))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /api/users/:user (change role)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{managedUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{managedUserId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"role\":\"interviewer\"}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('200', () => pm.response.to.have.status(200))",
+                  "pm.test('the role changed', () => pm.expect(pm.response.json().data.role).to.eql('interviewer'))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "PATCH /api/users/:user (cross-org move rejected)",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              { "key": "Accept", "value": "application/json" },
+              { "key": "Content-Type", "value": "application/json" }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{managedUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{managedUserId}}"]
+            },
+            "body": {
+              "mode": "raw",
+              "raw": "{\"organization_id\":999999}"
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('422 - a user cannot be moved to another org', () => pm.response.to.have.status(422))"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "DELETE /api/users/:user",
+          "request": {
+            "method": "DELETE",
+            "header": [{ "key": "Accept", "value": "application/json" }],
+            "url": {
+              "raw": "{{baseUrl}}/api/users/{{managedUserId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "users", "{{managedUserId}}"]
             }
           },
           "event": [

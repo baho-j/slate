@@ -9,7 +9,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
 /**
  * @mixin Organization
  */
-class PublicOrganizationResource extends JsonResource
+class OrganizationResource extends JsonResource
 {
     /**
      * @return array<string, mixed>
@@ -17,6 +17,7 @@ class PublicOrganizationResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
+            'id' => $this->id,
             'name' => $this->name,
             'slug' => $this->slug,
             'description' => $this->description,

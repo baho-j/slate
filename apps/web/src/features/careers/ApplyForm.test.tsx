@@ -62,6 +62,28 @@ describe('ApplyForm', () => {
     expect(uploadCvMock).not.toHaveBeenCalled()
   })
 
+  it('flags a wrong-type CV on selection, before any upload', async () => {
+    renderForm()
+
+    const png = new File(['x'], 'photo.png', { type: 'image/png' })
+    await userEvent.upload(screen.getByLabelText(/CV/), png, { applyAccept: false })
+
+    expect(await screen.findByText('The file must be a PDF.')).toBeInTheDocument()
+    expect(uploadCvMock).not.toHaveBeenCalled()
+  })
+
+  it('flags an oversized CV on selection', async () => {
+    renderForm()
+
+    const big = new File([new Uint8Array(5 * 1024 * 1024 + 1)], 'cv.pdf', {
+      type: 'application/pdf',
+    })
+    await userEvent.upload(screen.getByLabelText(/CV/), big)
+
+    expect(await screen.findByText('The file must be 5MB or smaller.')).toBeInTheDocument()
+    expect(uploadCvMock).not.toHaveBeenCalled()
+  })
+
   it('uploads the CV then submits and shows success', async () => {
     uploadCvMock.mockResolvedValue({ key: 'cv/x.pdf', originalName: 'cv.pdf' })
     submitApplicationMock.mockResolvedValue(undefined)

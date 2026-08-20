@@ -87,8 +87,10 @@ class LogoStorage
         $extension = Str::lower(pathinfo($filename, PATHINFO_EXTENSION));
         $name = Str::uuid()->toString();
 
+        // Blobs sit at the root of the dedicated `logos` container, so the public URL is
+        // simply <container-url>/<key> with no doubled path segment.
         return in_array($extension, config('logo.extensions'), true)
-            ? "logos/{$name}.{$extension}"
-            : "logos/{$name}";
+            ? "logo-{$name}.{$extension}"
+            : "logo-{$name}";
     }
 }

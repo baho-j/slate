@@ -1,6 +1,7 @@
 import { type FormEvent, type ReactNode, useId, useMemo, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { acceptAttribute, CV_CONSTRAINT, validateFile } from '@/lib/file-validation'
 import { answersSchema } from './answers-schema'
 import { type ApplyFormValues, applyFormSchema } from './apply-schema'
 import { previewRequirements } from './criteria-preview'
@@ -81,6 +82,13 @@ export function ApplyForm({ orgSlug, jobId, fields = [], criteria = [] }: ApplyF
     })
   }
 
+  function handleCvChange(file: File | null) {
+    setCv(file)
+    // Validate the moment a file is chosen so the error shows immediately, before submit.
+    const problem = file ? validateFile(file, CV_CONSTRAINT) : undefined
+    setErrors((current) => ({ ...current, cv: problem ?? undefined }))
+  }
+
   const duplicate = apply.error?.response?.status === 409
 
   return (
@@ -110,9 +118,9 @@ export function ApplyForm({ orgSlug, jobId, fields = [], criteria = [] }: ApplyF
         <Input
           id={`${fieldId}-cv`}
           type="file"
-          accept="application/pdf"
+          accept={acceptAttribute(CV_CONSTRAINT)}
           className="h-auto py-2"
-          onChange={(event) => setCv(event.target.files?.[0] ?? null)}
+          onChange={(event) => handleCvChange(event.target.files?.[0] ?? null)}
         />
       </Field>
 

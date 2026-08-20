@@ -67,19 +67,19 @@ describe('editing the org profile', function () {
 
     test('a verified logo upload is stored as a public url', function () {
         Storage::fake('logo');
-        Storage::disk('logo')->put('logos/brand.png', str_repeat("\x89PNG\r\n", 4));
+        Storage::disk('logo')->put('logo-brand.png', str_repeat("\x89PNG\r\n", 4));
 
         $this->actingAs($this->hr)
-            ->patchJson('/api/organizations/current', ['logo_key' => 'logos/brand.png'])
+            ->patchJson('/api/organizations/current', ['logo_key' => 'logo-brand.png'])
             ->assertOk()
-            ->assertJsonPath('data.logo_url', fn ($url) => str_contains((string) $url, 'logos/brand.png'));
+            ->assertJsonPath('data.logo_url', fn ($url) => str_contains((string) $url, 'logo-brand.png'));
     });
 
     test('a logo key that was never uploaded is rejected', function () {
         Storage::fake('logo');
 
         $this->actingAs($this->hr)
-            ->patchJson('/api/organizations/current', ['logo_key' => 'logos/ghost.png'])
+            ->patchJson('/api/organizations/current', ['logo_key' => 'logo-ghost.png'])
             ->assertUnprocessable()
             ->assertJsonValidationErrors('logo_key');
     });

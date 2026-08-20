@@ -87,4 +87,26 @@ describe('OrgProfileForm', () => {
       }),
     )
   })
+
+  it('rejects an oversized logo before uploading', async () => {
+    renderForm()
+
+    const tooBig = new File([new Uint8Array(2 * 1024 * 1024 + 1)], 'big.png', { type: 'image/png' })
+    await userEvent.upload(screen.getByLabelText(/Upload logo/), tooBig)
+
+    expect(await screen.findByText(/2MB or smaller/)).toBeInTheDocument()
+    expect(uploadLogoMock).not.toHaveBeenCalled()
+  })
+
+  it('rejects a wrong-type logo before uploading', async () => {
+    renderForm()
+
+    const gif = new File(['x'], 'anim.gif', { type: 'image/gif' })
+    // applyAccept: false simulates a file that bypassed the dialog's accept filter,
+    // proving the JS guard still catches it before the upload call.
+    await userEvent.upload(screen.getByLabelText(/Upload logo/), gif, { applyAccept: false })
+
+    expect(await screen.findByText(/PNG, JPEG, SVG, or WebP/)).toBeInTheDocument()
+    expect(uploadLogoMock).not.toHaveBeenCalled()
+  })
 })

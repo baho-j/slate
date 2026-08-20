@@ -21,7 +21,6 @@ return new class extends Migration
             $table->unique(['organization_id', 'candidate_id']);
         });
 
-        // Full-text search over candidate details for the pool (reuses the #60 approach).
         // Email is split on @ and . so its parts are searchable as separate tokens.
         DB::statement(<<<'SQL'
             ALTER TABLE candidates ADD COLUMN search_vector tsvector

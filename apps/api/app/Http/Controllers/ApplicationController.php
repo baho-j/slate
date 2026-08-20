@@ -107,9 +107,7 @@ class ApplicationController extends Controller
     {
         $query = Application::query()->with('candidate');
 
-        // Candidates have no organization, so the org global scope would hide even
-        // their own application; drop it for them and let the policy gate ownership.
-        // Staff keep the scope so cross-org rows 404 instead of leaking via a 403.
+        // Candidates have no org, so the org scope would hide their own application; the policy gates ownership instead.
         if (auth()->user()?->isCandidate()) {
             $query->withoutGlobalScopes();
         }

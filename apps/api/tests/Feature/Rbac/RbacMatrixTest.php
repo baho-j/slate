@@ -201,9 +201,7 @@ test('the matrix allows and denies each role correctly', function () {
 });
 
 test('an org-scoped resource returns 404 across orgs, never 403', function () {
-    // A world in org A, then an hr_manager from a *different* org B who is otherwise
-    // fully privileged. Every org-scoped resource must 404 for them (existence hidden),
-    // not 403 — `docs/04`.
+    // 404 rather than 403 so a foreign org can't confirm a row exists.
     $w = rbacWorld();
     $outsider = User::factory()
         ->for(Organization::factory()->create())

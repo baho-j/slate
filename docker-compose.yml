@@ -12,5 +12,18 @@ services:
     volumes:
       - slate-postgres-data:/var/lib/postgresql/data
 
+  # Azure Blob emulator. Lets the CV/logo presign -> PUT -> store flow run locally
+  # against a real Blob API (set CV_DISK=azure / LOGO_DISK=azure). See the README.
+  azurite:
+    image: mcr.microsoft.com/azure-storage/azurite
+    container_name: slate-azurite
+    restart: unless-stopped
+    command: azurite-blob --blobHost 0.0.0.0 --loose --skipApiVersionCheck
+    ports:
+      - "10000:10000"
+    volumes:
+      - slate-azurite-data:/data
+
 volumes:
   slate-postgres-data:
+  slate-azurite-data:

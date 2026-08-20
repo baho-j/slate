@@ -23,7 +23,7 @@ class UpdateOrganizationRequest extends FormRequest
             'description' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'website' => ['sometimes', 'nullable', 'url', 'max:255'],
             // The key returned by the logo upload; resolved to a stored URL in the controller.
-            'logo_key' => ['sometimes', 'nullable', 'string', 'starts_with:logos/', 'max:255'],
+            'logo_key' => ['sometimes', 'nullable', 'string', 'starts_with:logo-', 'max:255'],
         ];
     }
 

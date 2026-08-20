@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useToast } from '@/components/ui/toast-context'
+import { acceptAttribute, LOGO_CONSTRAINT, validateFile } from '@/lib/file-validation'
 import { uploadLogo } from './api'
 import { useUpdateOrganization } from './hooks'
 import type { Organization } from './types'
@@ -19,6 +20,13 @@ export function OrgProfileForm({ organization }: { organization: Organization })
   const [error, setError] = useState<string | null>(null)
 
   async function handleLogo(file: File) {
+    // Validate type and size on the client before spending a presign/SAS round-trip.
+    const problem = validateFile(file, LOGO_CONSTRAINT)
+    if (problem) {
+      setError(problem)
+      return
+    }
+
     setUploading(true)
     setError(null)
     try {
@@ -77,7 +85,7 @@ export function OrgProfileForm({ organization }: { organization: Organization })
             {uploading ? 'Uploading…' : 'Upload logo'}
             <input
               type="file"
-              accept="image/png,image/jpeg,image/svg+xml,image/webp"
+              accept={acceptAttribute(LOGO_CONSTRAINT)}
               className="sr-only"
               disabled={uploading}
               onChange={(event) => {

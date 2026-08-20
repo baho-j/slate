@@ -39,7 +39,7 @@ Route::middleware('throttle:public')->prefix('public')->group(function () {
         ->name('applications.cv.download');
 
     Route::put('/uploads/logo/{key}', [LogoUploadController::class, 'put'])
-        ->where('key', 'logos/.*')
+        ->where('key', 'logo-.*')
         ->name('public.uploads.logo.put');
 });
 

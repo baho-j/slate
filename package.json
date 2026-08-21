@@ -15,6 +15,11 @@
     "typecheck": "pnpm --filter web run typecheck",
     "test": "pnpm --filter web run test",
     "test:coverage": "pnpm --filter web run test:coverage",
-    "web:ci": "pnpm --filter web run ci"
+    "web:ci": "pnpm --filter web run ci",
+    "e2e": "pnpm --filter web run build && playwright test",
+    "e2e:report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
   }
 }

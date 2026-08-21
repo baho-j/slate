@@ -47,3 +47,9 @@ Thumbs.db
 /CLAUDE.md
 /docs/
 .claude/
+
+# Playwright
+test-results/
+playwright-report/
+playwright/.cache/
+apps/web/coverage/

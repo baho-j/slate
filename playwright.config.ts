@@ -37,7 +37,8 @@ export default defineConfig({
     },
     {
       // The build is done up front (see the e2e npm script / CI) so this only serves it.
-      command: `pnpm --filter web run preview -- --port ${WEB_PORT} --host 127.0.0.1 --strictPort`,
+      // Host/port/strictPort come from vite's preview config, which binds 127.0.0.1 reliably.
+      command: `pnpm --filter web run preview`,
       url: WEB_URL,
       reuseExistingServer: !process.env.CI,
       timeout: 120_000,

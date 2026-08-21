@@ -70,7 +70,7 @@ jobs:
         with:
           php-version: ${{ env.PHP_VERSION }}
           extensions: mbstring, pdo_pgsql, openssl, fileinfo, curl, zip, intl, bcmath
-          coverage: none
+          coverage: pcov
 
       - name: Cache Composer packages
         uses: actions/cache@v4
@@ -90,7 +90,7 @@ jobs:
       - name: Check formatting
         run: vendor/bin/pint --test app database tests
 
-      - name: Run tests
+      - name: Run tests with coverage
         env:
           DB_CONNECTION: pgsql
           DB_HOST: 127.0.0.1
@@ -98,7 +98,16 @@ jobs:
           DB_DATABASE: slate_test
           DB_USERNAME: slate
           DB_PASSWORD: slate
-        run: php artisan test
+        run: php artisan test --coverage --coverage-clover=coverage.xml | tee coverage-summary.txt
+
+      - name: Upload API coverage summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-coverage
+          path: |
+            apps/api/coverage-summary.txt
+            apps/api/coverage.xml
 
   web:
     name: Web (React)
@@ -124,8 +133,17 @@ jobs:
       - name: Typecheck
         run: pnpm run typecheck
 
-      - name: Run tests
-        run: pnpm run test
+      - name: Run tests with coverage
+        run: pnpm run test:coverage --reporter=default --coverage.reporter=text --coverage.reporter=json-summary | tee web-coverage-summary.txt
+
+      - name: Upload web coverage summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-coverage
+          path: |
+            web-coverage-summary.txt
+            apps/web/coverage/coverage-summary.json
 
       - name: Build
         env:
@@ -203,3 +221,66 @@ jobs:
         with:
           name: newman-report
           path: newman-report.json
+
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: slate
+          POSTGRES_USER: slate
+          POSTGRES_PASSWORD: slate
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U slate"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ env.PHP_VERSION }}
+          extensions: mbstring, pdo_pgsql, openssl, fileinfo, curl, zip, intl, bcmath
+          coverage: none
+
+      - uses: pnpm/action-setup@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: pnpm
+
+      - name: Install JS dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Prepare the API
+        working-directory: apps/api
+        run: |
+          composer install --prefer-dist --no-progress --no-interaction
+          cp .env.example .env
+          php artisan key:generate
+
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Run E2E
+        env:
+          E2E_DB_PORT: '5432'
+          VITE_API_URL: http://127.0.0.1:8000/api
+        run: pnpm run e2e
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/

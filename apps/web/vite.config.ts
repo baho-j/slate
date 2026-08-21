@@ -16,6 +16,11 @@ export default defineConfig({
       '@': fileURLToPath(new URL('./src', import.meta.url)),
     },
   },
+  preview: {
+    host: '127.0.0.1',
+    port: 4173,
+    strictPort: true,
+  },
   test: {
     environment: 'jsdom',
     globals: true,
